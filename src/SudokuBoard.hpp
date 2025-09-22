@@ -1,0 +1,30 @@
+#ifndef SUDOKU_BOARD_HPP
+#define SUDOKU_BOARD_HPP
+
+#include <vector>
+#include <array>
+#include <optional>
+
+class SudokuBoard {
+public:
+    static constexpr int SIZE = 9;
+    SudokuBoard() noexcept;
+    int getCell(int row, int col) const noexcept;
+    bool setCell(int row, int col, int value) noexcept;
+    bool isValid() const noexcept;
+    bool isFull() const noexcept;
+    void clear() noexcept;
+    bool isPreFilled(int row, int col) const noexcept;
+
+private:
+    std::vector<std::vector<int>> board_;                   // 9x9 grid
+    std::vector<std::vector<bool>> pre_filled_;             // to track original puzzle cells
+    
+    // helper to check if a position is valid
+    bool isValidPosition(int row, int col) const noexcept;
+    
+    // helper to check if a value is valid
+    bool isValidValue(int value) const noexcept;
+};
+
+#endif // SUDOKU_BOARD_HPP
