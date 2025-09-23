@@ -134,3 +134,18 @@ TEST_F(SudokuBoardTest, IsValidMove_CorrectBehavior) {
     EXPECT_FALSE(board.isValidMove(0, 0, 0)) << "Value 0 should fail";
     EXPECT_FALSE(board.isValidMove(0, 0, 10)) << "Value 10 should fail";
 }
+
+TEST_F(SudokuBoardTest, SolveBoard_ProducesValidFullBoard) {
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    EXPECT_TRUE(board.solveBoard(rng)) << "Empty board should be solvable";
+    EXPECT_TRUE(board.isFull()) << "Solved board should be full";
+    EXPECT_TRUE(board.isValid()) << "Solved board should be valid";
+    // Check no pre-filled cells were set (solver doesn't touch pre_filled_)
+    for (int row = 0; row < SudokuBoard::SIZE; ++row) {
+        for (int col = 0; col < SudokuBoard::SIZE; ++col) {
+            EXPECT_FALSE(board.isPreFilled(row, col)) << "Solver should not set pre-filled cells";
+        }
+    }
+}
+

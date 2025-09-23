@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <optional>
+#include <random>
 
 class SudokuBoard {
 public:
@@ -17,6 +18,7 @@ public:
     void clear() noexcept;
     bool isPreFilled(int row, int col) const noexcept;
     bool isValidMove(int row, int col, int value) const noexcept;   // check if placing value at (row, col) is valid
+    bool solveBoard(std::mt19937& rng) noexcept;
 
 private:
     std::vector<std::vector<int>> board_;                   // 9x9 grid

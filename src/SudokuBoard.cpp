@@ -107,3 +107,24 @@ bool SudokuBoard::isValidMove(int row, int col, int value) const noexcept {
     }
     return true;
 }
+
+bool SudokuBoard::solveBoard(std::mt19937& rng) noexcept {
+    for (int row = 0; row < SIZE; ++row) {
+        for (int col = 0; col < SIZE; ++col) {
+            if (board_[row][col] == 0) {
+                // try numbers 1-9 in random order
+                std::vector<int> values = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+                std::shuffle(values.begin(), values.end(), rng);
+                for (int value : values) {
+                    if (isValidMove(row, col, value)) {
+                        board_[row][col] = value;
+                        if (solveBoard(rng)) return true;
+                        board_[row][col] = 0; // backtrack
+                    }
+                }
+                return false; // no valid number found
+            }
+        }
+    }
+    return true; // board solved
+}
