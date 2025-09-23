@@ -8,6 +8,7 @@
 class SudokuBoard {
 public:
     static constexpr int SIZE = 9;
+    enum class Difficulty { Easy, Medium, Hard };           // Difficulty levels for puzzle generation
     SudokuBoard() noexcept;
     int getCell(int row, int col) const noexcept;
     bool setCell(int row, int col, int value) noexcept;
@@ -15,6 +16,7 @@ public:
     bool isFull() const noexcept;
     void clear() noexcept;
     bool isPreFilled(int row, int col) const noexcept;
+    bool isValidMove(int row, int col, int value) const noexcept;   // check if placing value at (row, col) is valid
 
 private:
     std::vector<std::vector<int>> board_;                   // 9x9 grid
