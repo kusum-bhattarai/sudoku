@@ -84,3 +84,26 @@ bool SudokuBoard::isValidPosition(int row, int col) const noexcept {
 bool SudokuBoard::isValidValue(int value) const noexcept {
     return value >= 0 && value <= 9; // 0 = empty, 1-9 = valid numbers
 }
+
+bool SudokuBoard::isValidMove(int row, int col, int value) const noexcept {
+    if (!isValidPosition(row, col) || !isValidValue(value) || value == 0) {
+        return false;
+    }
+    // Check row
+    for (int c = 0; c < SIZE; ++c) {
+        if (c != col && board_[row][c] == value) return false;
+    }
+    // Check column
+    for (int r = 0; r < SIZE; ++r) {
+        if (r != row && board_[r][col] == value) return false;
+    }
+    // Check 3x3 box
+    int box_row = (row / 3) * 3;
+    int box_col = (col / 3) * 3;
+    for (int r = box_row; r < box_row + 3; ++r) {
+        for (int c = box_col; c < box_col + 3; ++c) {
+            if ((r != row || c != col) && board_[r][c] == value) return false;
+        }
+    }
+    return true;
+}
