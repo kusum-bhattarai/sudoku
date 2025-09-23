@@ -109,3 +109,28 @@ TEST_F(SudokuBoardTest, IsPreFilled_InitiallyFalse) {
     EXPECT_FALSE(board.isPreFilled(8, 8)) << "Corner cell should not be pre-filled";
     EXPECT_FALSE(board.isPreFilled(-1, 0)) << "Invalid position should return false";
 }
+
+TEST_F(SudokuBoardTest, IsValidMove_CorrectBehavior) {
+    // Set up a partial board
+    board.setCell(0, 0, 1); // Row 0, col 0 has 1
+    board.setCell(1, 1, 2); // Box (0,0), row 1, col 1 has 2
+    board.setCell(3, 0, 3); // Col 0, row 3 has 3
+
+    // Valid moves
+    EXPECT_TRUE(board.isValidMove(0, 1, 4)) << "Value 4 should be valid in row 0, col 1 (no conflicts)";
+    EXPECT_TRUE(board.isValidMove(2, 2, 5)) << "Value 5 should be valid in row 2, col 2 (no conflicts)";
+    EXPECT_TRUE(board.isValidMove(8, 8, 9)) << "Value 9 should be valid in row 8, col 8 (no conflicts)";
+
+    // Invalid moves
+    EXPECT_FALSE(board.isValidMove(0, 2, 1)) << "Value 1 in row 0 should fail (duplicate in row)";
+    EXPECT_FALSE(board.isValidMove(2, 0, 3)) << "Value 3 in col 0 should fail (duplicate in col)";
+    EXPECT_FALSE(board.isValidMove(2, 2, 2)) << "Value 2 in box (0,0) should fail (duplicate in box)";
+    
+    // Edge cases
+    EXPECT_FALSE(board.isValidMove(-1, 0, 1)) << "Negative row should fail";
+    EXPECT_FALSE(board.isValidMove(0, -1, 1)) << "Negative col should fail";
+    EXPECT_FALSE(board.isValidMove(SudokuBoard::SIZE, 0, 1)) << "Out-of-bounds row should fail";
+    EXPECT_FALSE(board.isValidMove(0, SudokuBoard::SIZE, 1)) << "Out-of-bounds col should fail";
+    EXPECT_FALSE(board.isValidMove(0, 0, 0)) << "Value 0 should fail";
+    EXPECT_FALSE(board.isValidMove(0, 0, 10)) << "Value 10 should fail";
+}
