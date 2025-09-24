@@ -190,3 +190,31 @@ int SudokuBoard::removeCells(int to_remove, std::mt19937& rng) noexcept {
     }
     return removed;
 }
+
+void SudokuBoard::generatePuzzle(Difficulty difficulty) noexcept {
+    // Clear board and reset hints
+    clear();
+    
+    // Initialize random number generator
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    
+    // Generate full valid board
+    solveBoard(rng);
+    
+    // Remove cells based on difficulty
+    int to_remove = 0;
+    switch (difficulty) {
+        case Difficulty::Easy:   to_remove = 41; break; // 40 cells remain
+        case Difficulty::Medium: to_remove = 56; break; // 25 cells remain
+        case Difficulty::Hard:   to_remove = 66; break; // 15 cells remain
+    }
+    removeCells(to_remove, rng);
+    
+    // Mark remaining cells as pre-filled
+    for (int row = 0; row < SIZE; ++row) {
+        for (int col = 0; col < SIZE; ++col) {
+            pre_filled_[row][col] = (board_[row][col] != 0);
+        }
+    }
+}

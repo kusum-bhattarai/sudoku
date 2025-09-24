@@ -21,10 +21,11 @@ public:
     bool isValidMove(int row, int col, int value) const noexcept;   // check if placing value at (row, col) is valid
     bool solveBoard(std::mt19937& rng) noexcept;
     std::optional<int> getHint(int row, int col, std::mt19937& rng) noexcept;      // get a hint for cell (row, col)
-    int getHintsUsed() const noexcept;                // number of hints used  
+    int getHintsUsed() const noexcept;                          // number of hints used  
     // mark cell as pre-filled or not for testing and puzzle generation
     void setPreFilled(int row, int col, bool value) noexcept;    
-    int removeCells(int to_remove, std::mt19937& rng) noexcept;                  
+    int removeCells(int to_remove, std::mt19937& rng) noexcept;           
+    void generatePuzzle(Difficulty difficulty) noexcept;          // generate a new puzzle of given difficulty       
 
 private:
     std::vector<std::vector<int>> board_;                   // 9x9 grid
