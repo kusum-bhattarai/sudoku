@@ -163,3 +163,30 @@ void SudokuBoard::setPreFilled(int row, int col, bool value) noexcept {
         pre_filled_[row][col] = value;
     }
 }
+
+// helper to remove cells while ensuring unique solution
+int SudokuBoard::removeCells(int to_remove, std::mt19937& rng) noexcept {
+    std::vector<std::pair<int, int>> cells;
+    for (int row = 0; row < SIZE; ++row) {
+        for (int col = 0; col < SIZE; ++col) {
+            if (board_[row][col] != 0) {
+                cells.emplace_back(row, col);
+            }
+        }
+    }
+    std::shuffle(cells.begin(), cells.end(), rng);
+    
+    int removed = 0;
+    for (const auto& [row, col] : cells) {
+        if (removed >= to_remove) break;
+        int backup = board_[row][col];
+        board_[row][col] = 0;
+        SudokuBoard temp = *this;
+        if (temp.solveBoard(rng)) {
+            ++removed;
+        } else {
+            board_[row][col] = backup;
+        }
+    }
+    return removed;
+}
