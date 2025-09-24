@@ -180,3 +180,28 @@ TEST_F(SudokuBoardTest, GetHint_CorrectBehavior) {
     EXPECT_FALSE(board.getHint(0, 4, rng).has_value()) << "Exceeding max hints should return nullopt";
 }
 
+TEST_F(SudokuBoardTest, RemoveCells_ProducesSolvablePuzzle) {
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
+    // Create a full valid board
+    board.solveBoard(rng);
+    ASSERT_TRUE(board.isFull()) << "Board should be full before removing cells";
+
+    // Remove 41 cells (Easy: 40 left)
+    int removed = board.removeCells(41, rng);
+    int filled = 0;
+    for (int row = 0; row < SudokuBoard::SIZE; ++row) {
+        for (int col = 0; col < SudokuBoard::SIZE; ++col) {
+            if (board.getCell(row, col) != 0) {
+                ++filled;
+            }
+        }
+    }
+    EXPECT_EQ(filled, 40) << "Should have 40 filled cells after removing 41";
+    EXPECT_EQ(removed, 41) << "Should have removed 41 cells";
+    EXPECT_TRUE(board.isValid()) << "Board should be valid after removal";
+    SudokuBoard temp = board;
+    EXPECT_TRUE(temp.solveBoard(rng)) << "Board should be solvable after removal";
+}
+
