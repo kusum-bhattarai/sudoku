@@ -8,8 +8,9 @@
 
 class SudokuBoard {
 public:
+    static constexpr int MAX_HINTS = 3;                 // Maximum number of hints allowed
     static constexpr int SIZE = 9;
-    enum class Difficulty { Easy, Medium, Hard };           // Difficulty levels for puzzle generation
+    enum class Difficulty { Easy, Medium, Hard };       // Difficulty levels for puzzle generation
     SudokuBoard() noexcept;
     int getCell(int row, int col) const noexcept;
     bool setCell(int row, int col, int value) noexcept;
@@ -19,6 +20,8 @@ public:
     bool isPreFilled(int row, int col) const noexcept;
     bool isValidMove(int row, int col, int value) const noexcept;   // check if placing value at (row, col) is valid
     bool solveBoard(std::mt19937& rng) noexcept;
+    std::optional<int> getHint(int row, int col, std::mt19937& rng) noexcept;      // get a hint for cell (row, col)
+    int getHintsUsed() const noexcept;                // number of hints used  
 
 private:
     std::vector<std::vector<int>> board_;                   // 9x9 grid
@@ -29,6 +32,8 @@ private:
     
     // helper to check if a value is valid
     bool isValidValue(int value) const noexcept;
+    
+    int hints_used_ = 0;                  // count of hints used
 };
 
 #endif // SUDOKU_BOARD_HPP

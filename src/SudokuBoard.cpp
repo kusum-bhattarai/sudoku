@@ -128,3 +128,32 @@ bool SudokuBoard::solveBoard(std::mt19937& rng) noexcept {
     }
     return true; // board solved
 }
+
+std::optional<int> SudokuBoard::getHint(int row, int col, std::mt19937& rng) noexcept {
+    if (!isValidPosition(row, col) || pre_filled_[row][col] || hints_used_ >= MAX_HINTS) {
+        return std::nullopt; // Invalid position, pre-filled, or max hints reached
+    }
+
+    // Try values 1-9 in random order
+    std::vector<int> values = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    std::shuffle(values.begin(), values.end(), rng);
+    for (int value : values) {
+        if (isValidMove(row, col, value)) {
+            // Check if this value leads to a solvable board
+            int original = board_[row][col];
+            board_[row][col] = value;
+            SudokuBoard temp = *this; // Copy to test solvability
+            if (temp.solveBoard(rng)) {
+                board_[row][col] = original; // Restore original state
+                ++hints_used_;
+                return value;
+            }
+            board_[row][col] = original; // Restore if unsolvable
+        }
+    }
+    return std::nullopt; // No valid hint found
+}
+
+int SudokuBoard::getHintsUsed() const noexcept {
+    return hints_used_;
+}
