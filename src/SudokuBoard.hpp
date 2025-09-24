@@ -22,6 +22,8 @@ public:
     bool solveBoard(std::mt19937& rng) noexcept;
     std::optional<int> getHint(int row, int col, std::mt19937& rng) noexcept;      // get a hint for cell (row, col)
     int getHintsUsed() const noexcept;                // number of hints used  
+    // mark cell as pre-filled or not for testing and puzzle generation
+    void setPreFilled(int row, int col, bool value) noexcept;                      
 
 private:
     std::vector<std::vector<int>> board_;                   // 9x9 grid
@@ -32,7 +34,7 @@ private:
     
     // helper to check if a value is valid
     bool isValidValue(int value) const noexcept;
-    
+
     int hints_used_ = 0;                  // count of hints used
 };
 

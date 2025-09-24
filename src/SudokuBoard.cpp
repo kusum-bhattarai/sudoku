@@ -157,3 +157,9 @@ std::optional<int> SudokuBoard::getHint(int row, int col, std::mt19937& rng) noe
 int SudokuBoard::getHintsUsed() const noexcept {
     return hints_used_;
 }
+
+void SudokuBoard::setPreFilled(int row, int col, bool value) noexcept {
+    if (isValidPosition(row, col)) {
+        pre_filled_[row][col] = value;
+    }
+}

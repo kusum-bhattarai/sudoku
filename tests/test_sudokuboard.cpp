@@ -149,3 +149,34 @@ TEST_F(SudokuBoardTest, SolveBoard_ProducesValidFullBoard) {
     }
 }
 
+TEST_F(SudokuBoardTest, GetHint_CorrectBehavior) {
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
+    // Set up a partial board
+    board.setCell(0, 0, 1);
+    board.setCell(1, 1, 2);
+    board.setCell(3, 0, 3);
+    board.setPreFilled(0, 0, true); // Mark some cells as pre-filled
+    board.setPreFilled(1, 1, true);
+
+    // Valid hint request
+    auto hint = board.getHint(0, 1, rng);
+    ASSERT_TRUE(hint.has_value()) << "Hint for valid cell should return a value";
+    EXPECT_TRUE(*hint >= 1 && *hint <= 9) << "Hint should be 1-9";
+    EXPECT_TRUE(board.isValidMove(0, 1, *hint)) << "Hint should be valid for (0,1)";
+    EXPECT_EQ(board.getHintsUsed(), 1) << "Hints used should be 1";
+
+    // Invalid requests
+    EXPECT_FALSE(board.getHint(-1, 0, rng).has_value()) << "Negative row should return nullopt";
+    EXPECT_FALSE(board.getHint(0, -1, rng).has_value()) << "Negative col should return nullopt";
+    EXPECT_FALSE(board.getHint(SudokuBoard::SIZE, 0, rng).has_value()) << "Out-of-bounds row should return nullopt";
+    EXPECT_FALSE(board.getHint(0, 0, rng).has_value()) << "Pre-filled cell should return nullopt";
+
+    // Max hints limit
+    board.getHint(0, 2, rng); // Hint 2
+    board.getHint(0, 3, rng); // Hint 3
+    EXPECT_EQ(board.getHintsUsed(), 3) << "Hints used should be 3";
+    EXPECT_FALSE(board.getHint(0, 4, rng).has_value()) << "Exceeding max hints should return nullopt";
+}
+
