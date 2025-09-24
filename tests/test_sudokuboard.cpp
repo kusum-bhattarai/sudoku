@@ -205,3 +205,112 @@ TEST_F(SudokuBoardTest, RemoveCells_ProducesSolvablePuzzle) {
     EXPECT_TRUE(temp.solveBoard(rng)) << "Board should be solvable after removal";
 }
 
+TEST_F(SudokuBoardTest, GeneratePuzzle_ProducesValidPuzzle) {
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
+    // Test Easy (40 cells)
+    board.generatePuzzle(SudokuBoard::Difficulty::Easy);
+    int filled = 0;
+    for (int row = 0; row < SudokuBoard::SIZE; ++row) {
+        for (int col = 0; col < SudokuBoard::SIZE; ++col) {
+            if (board.getCell(row, col) != 0) {
+                ++filled;
+                EXPECT_TRUE(board.isPreFilled(row, col)) << "Filled cell should be pre-filled";
+            } else {
+                EXPECT_FALSE(board.isPreFilled(row, col)) << "Empty cell should not be pre-filled";
+            }
+        }
+    }
+    EXPECT_EQ(filled, 40) << "Easy puzzle should have 40 filled cells";
+    EXPECT_TRUE(board.isValid()) << "Easy puzzle should be valid";
+    SudokuBoard temp_easy = board;
+    EXPECT_TRUE(temp_easy.solveBoard(rng)) << "Easy puzzle should be solvable";
+    EXPECT_EQ(board.getHintsUsed(), 0) << "New puzzle should reset hints";
+
+    // Test Medium (25 cells)
+    board.generatePuzzle(SudokuBoard::Difficulty::Medium);
+    filled = 0;
+    for (int row = 0; row < SudokuBoard::SIZE; ++row) {
+        for (int col = 0; col < SudokuBoard::SIZE; ++col) {
+            if (board.getCell(row, col) != 0) {
+                ++filled;
+                EXPECT_TRUE(board.isPreFilled(row, col)) << "Filled cell should be pre-filled";
+            } else {
+                EXPECT_FALSE(board.isPreFilled(row, col)) << "Empty cell should not be pre-filled";
+            }
+        }
+    }
+    EXPECT_EQ(filled, 25) << "Medium puzzle should have 25 filled cells";
+    EXPECT_TRUE(board.isValid()) << "Medium puzzle should be valid";
+    SudokuBoard temp_medium = board;
+    EXPECT_TRUE(temp_medium.solveBoard(rng)) << "Medium puzzle should be solvable";
+
+    // Test Hard (15 cells)
+    board.generatePuzzle(SudokuBoard::Difficulty::Hard);
+    filled = 0;
+    for (int row = 0; row < SudokuBoard::SIZE; ++row) {
+        for (int col = 0; col < SudokuBoard::SIZE; ++col) {
+            if (board.getCell(row, col) != 0) {
+                ++filled;
+                EXPECT_TRUE(board.isPreFilled(row, col)) << "Filled cell should be pre-filled";
+            } else {
+                EXPECT_FALSE(board.isPreFilled(row, col)) << "Empty cell should not be pre-filled";
+            }
+        }
+    }
+    EXPECT_EQ(filled, 15) << "Hard puzzle should have 15 filled cells";
+    EXPECT_TRUE(board.isValid()) << "Hard puzzle should be valid";
+    SudokuBoard temp_hard = board;
+    EXPECT_TRUE(temp_hard.solveBoard(rng)) << "Hard puzzle should be solvable";
+}
+
+TEST_F(SudokuBoardTest, GeneratePuzzle_Randomization) {
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
+    // Generate two Easy puzzles
+    board.generatePuzzle(SudokuBoard::Difficulty::Easy);
+    std::vector<std::vector<int>> board1 = board.getBoard(); 
+    board.generatePuzzle(SudokuBoard::Difficulty::Easy);
+    std::vector<std::vector<int>> board2 = board.getBoard(); 
+    // Check if boards differ
+    bool different = false;
+    for (int row = 0; row < SudokuBoard::SIZE; ++row) {
+        for (int col = 0; col < SudokuBoard::SIZE; ++col) {
+            if (board1[row][col] != board2[row][col]) {
+                different = true;
+                break;
+            }
+        }
+        if (different) break;
+    }
+    EXPECT_TRUE(different) << "Two Easy puzzles should differ due to randomization";
+}
+
+TEST_F(SudokuBoardTest, GeneratePuzzle_ResetsPartialBoard) {
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
+    // Set user moves
+    board.setCell(0, 0, 1);
+    board.setCell(1, 1, 2);
+    board.setPreFilled(0, 0, false); // User move, not pre-filled
+
+    // Generate Easy puzzle
+    board.generatePuzzle(SudokuBoard::Difficulty::Easy);
+    int filled = 0;
+    for (int row = 0; row < SudokuBoard::SIZE; ++row) {
+        for (int col = 0; col < SudokuBoard::SIZE; ++col) {
+            if (board.getCell(row, col) != 0) {
+                ++filled;
+                EXPECT_TRUE(board.isPreFilled(row, col)) << "Filled cell should be pre-filled";
+            } else {
+                EXPECT_FALSE(board.isPreFilled(row, col)) << "Empty cell should not be pre-filled";
+            }
+        }
+    }
+    EXPECT_EQ(filled, 40) << "Easy puzzle should have 40 filled cells after reset";
+    EXPECT_TRUE(board.isValid()) << "Puzzle should be valid";
+    EXPECT_EQ(board.getHintsUsed(), 0) << "Puzzle should reset hints";
+}

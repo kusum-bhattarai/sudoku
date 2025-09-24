@@ -11,6 +11,7 @@ public:
     static constexpr int MAX_HINTS = 3;                 // Maximum number of hints allowed
     static constexpr int SIZE = 9;
     enum class Difficulty { Easy, Medium, Hard };       // Difficulty levels for puzzle generation
+    const std::vector<std::vector<int>>& getBoard() const { return board_; }    // getter for board_ for testing
     SudokuBoard() noexcept;
     int getCell(int row, int col) const noexcept;
     bool setCell(int row, int col, int value) noexcept;
