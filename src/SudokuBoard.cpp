@@ -6,6 +6,9 @@ SudokuBoard::SudokuBoard() noexcept {
 
     // all false for the prefilled tracker at initialization
     pre_filled_ = std::vector<std::vector<bool>>(SIZE, std::vector<bool>(SIZE, false));
+
+    hints_used_ = 0;
+    moves_.clear();             // initialize empty move history
 }
 
 int SudokuBoard::getCell(int row, int col) const noexcept {
@@ -19,6 +22,11 @@ bool SudokuBoard::setCell(int row, int col, int value) noexcept {
     if (!isValidPosition(row, col) || !isValidValue(value) || pre_filled_[row][col]) {
         return false;   // cant set the value for the cell (invalid position/ value/ pre-filled cell)
     }
+
+    if (moves_.size() >= MAX_UNDO) {
+        moves_.pop_front();     // Remove oldest move
+    }
+    moves_.push_back({row, col, board_[row][col]});
     board_[row][col] = value;
     return true;
 }
@@ -68,6 +76,8 @@ void SudokuBoard::clear() noexcept {
     for (auto& row : pre_filled_) {
         std::fill(row.begin(), row.end(), false);
     }
+    hints_used_ = 0;
+    moves_.clear();
 }
 
 bool SudokuBoard::isPreFilled(int row, int col) const noexcept {
@@ -217,4 +227,21 @@ void SudokuBoard::generatePuzzle(Difficulty difficulty) noexcept {
             pre_filled_[row][col] = (board_[row][col] != 0);
         }
     }
+}
+
+bool SudokuBoard::undo() noexcept {
+    if (moves_.empty()) {
+        return false;
+    }
+    auto move = moves_.back();
+    moves_.pop_back();
+    if (isValidPosition(move.row, move.col) && !pre_filled_[move.row][move.col]) {
+        board_[move.row][move.col] = move.old_value;
+        return true;
+    }
+    return false;
+}
+
+bool SudokuBoard::canUndo() const noexcept {
+    return !moves_.empty();
 }
