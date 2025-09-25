@@ -369,3 +369,70 @@ TEST_F(SudokuBoardTest, Undo_CorrectBehavior) {
     EXPECT_FALSE(board.setCell(0, 0, 5)) << "Setting pre-filled cell should fail";
     EXPECT_FALSE(board.undo()) << "Undo should fail with no new moves";
 }
+
+TEST_F(SudokuBoardTest, Undo_AdditionalCases) {
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
+    // Generate a puzzle
+    board.generatePuzzle(SudokuBoard::Difficulty::Easy);
+    
+    // Find non-pre-filled cells (first 6 empty cells)
+    std::vector<std::pair<int, int>> empty_cells;
+    for (int row = 0; row < SudokuBoard::SIZE && empty_cells.size() < 6; ++row) {
+        for (int col = 0; col < SudokuBoard::SIZE && empty_cells.size() < 6; ++col) {
+            if (board.getCell(row, col) == 0 && !board.isPreFilled(row, col)) {
+                empty_cells.emplace_back(row, col);
+            }
+        }
+    }
+    ASSERT_GE(empty_cells.size(), 6) << "Not enough empty cells for testing";
+
+    // to test multiple undos on same cell
+    EXPECT_TRUE(board.setCell(empty_cells[0].first, empty_cells[0].second, 1)) << "Set cell to 1";
+    EXPECT_TRUE(board.setCell(empty_cells[0].first, empty_cells[0].second, 2)) << "Set same cell to 2";
+    EXPECT_TRUE(board.setCell(empty_cells[0].first, empty_cells[0].second, 3)) << "Set same cell to 3";
+    EXPECT_EQ(board.getCell(empty_cells[0].first, empty_cells[0].second), 3) << "Cell should be 3";
+    EXPECT_TRUE(board.canUndo()) << "Should be able to undo";
+    EXPECT_TRUE(board.undo()) << "Undo to 2";
+    EXPECT_EQ(board.getCell(empty_cells[0].first, empty_cells[0].second), 2) << "Cell should be 2";
+    EXPECT_TRUE(board.undo()) << "Undo to 1";
+    EXPECT_EQ(board.getCell(empty_cells[0].first, empty_cells[0].second), 1) << "Cell should be 1";
+    EXPECT_TRUE(board.undo()) << "Undo to 0";
+    EXPECT_EQ(board.getCell(empty_cells[0].first, empty_cells[0].second), 0) << "Cell should be 0";
+    EXPECT_FALSE(board.canUndo()) << "No more moves to undo";
+
+    // to test invalid undo attempts
+    EXPECT_FALSE(board.undo()) << "Undo should fail when moves_ is empty";
+    EXPECT_FALSE(board.setCell(-1, 0, 1)) << "Invalid position should fail";
+    EXPECT_FALSE(board.undo()) << "Undo should fail after invalid setCell";
+    EXPECT_FALSE(board.setCell(0, 0, 10)) << "Invalid value should fail";
+    EXPECT_FALSE(board.undo()) << "Undo should fail after invalid value";
+
+    // to test undo after clear
+    EXPECT_TRUE(board.setCell(empty_cells[1].first, empty_cells[1].second, 4)) << "Set cell to 4";
+    EXPECT_TRUE(board.canUndo()) << "Should be able to undo";
+    board.clear();
+    EXPECT_FALSE(board.canUndo()) << "No moves after clear";
+    EXPECT_FALSE(board.undo()) << "Undo should fail after clear";
+
+    // to test max moves with mixed cells
+    EXPECT_TRUE(board.setCell(empty_cells[0].first, empty_cells[0].second, 1)) << "Set cell 0 to 1";
+    EXPECT_TRUE(board.setCell(empty_cells[1].first, empty_cells[1].second, 2)) << "Set cell 1 to 2";
+    EXPECT_TRUE(board.setCell(empty_cells[2].first, empty_cells[2].second, 3)) << "Set cell 2 to 3";
+    EXPECT_TRUE(board.setCell(empty_cells[3].first, empty_cells[3].second, 4)) << "Set cell 3 to 4";
+    EXPECT_TRUE(board.setCell(empty_cells[4].first, empty_cells[4].second, 5)) << "Set cell 4 to 5";
+    EXPECT_TRUE(board.setCell(empty_cells[5].first, empty_cells[5].second, 6)) << "Set cell 5 to 6 (pops cell 0)";
+    EXPECT_EQ(board.getCell(empty_cells[5].first, empty_cells[5].second), 6) << "Cell 5 should be 6";
+    EXPECT_TRUE(board.undo()) << "Undo cell 5 to 0";
+    EXPECT_EQ(board.getCell(empty_cells[5].first, empty_cells[5].second), 0) << "Cell 5 should be 0";
+    EXPECT_TRUE(board.undo()) << "Undo cell 4 to 0";
+    EXPECT_EQ(board.getCell(empty_cells[4].first, empty_cells[4].second), 0) << "Cell 4 should be 0";
+    EXPECT_TRUE(board.undo()) << "Undo cell 3 to 0";
+    EXPECT_EQ(board.getCell(empty_cells[3].first, empty_cells[3].second), 0) << "Cell 3 should be 0";
+    EXPECT_TRUE(board.undo()) << "Undo cell 2 to 0";
+    EXPECT_EQ(board.getCell(empty_cells[2].first, empty_cells[2].second), 0) << "Cell 2 should be 0";
+    EXPECT_TRUE(board.undo()) << "Undo cell 1 to 0";
+    EXPECT_EQ(board.getCell(empty_cells[1].first, empty_cells[1].second), 0) << "Cell 1 should be 0";
+    EXPECT_FALSE(board.canUndo()) << "No more moves to undo";
+}
