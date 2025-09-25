@@ -1,20 +1,12 @@
-#include <iostream>
+#include "GameUI.hpp"
+#include "SudokuBoard.hpp"
 
 int main() {
-    long cpp_version = __cplusplus;
-    std::cout << "C++ Language Standard: ";
-    if (cpp_version == 199711L) {
-        std::cout << "C++98/03" << std::endl;
-    } else if (cpp_version == 201103L) {
-        std::cout << "C++11" << std::endl;
-    } else if (cpp_version == 201402L) {
-        std::cout << "C++14" << std::endl;
-    } else if (cpp_version == 201703L) {
-        std::cout << "C++17" << std::endl;
-    } else if (cpp_version == 202002L) {
-        std::cout << "C++20" << std::endl;
-    } else {
-        std::cout << "Unknown or newer standard (" << cpp_version << ")" << std::endl;
-    }
+    SudokuBoard board;
+    GameUI ui(board);
+    // Test ncurses setup: display a message and wait for keypress
+    mvprintw(0, 0, "ncurses initialized. Press any key to exit.");
+    refresh();
+    getch();
     return 0;
 }
