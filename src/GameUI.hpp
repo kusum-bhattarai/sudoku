@@ -15,6 +15,9 @@ public:
     void showMenu() const noexcept;             // Placeholder for menu
     void handleInput() noexcept;                // Placeholder for input handling
 
+    // Getter for testing
+    const std::vector<std::vector<int>>& getBoard() const noexcept { return board_.getBoard(); }
+
 private:
     SudokuBoard& board_;                        // Reference to board
     WINDOW* window_;                            // ncurses window

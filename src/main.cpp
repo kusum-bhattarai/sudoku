@@ -3,10 +3,14 @@
 
 int main() {
     SudokuBoard board;
+    board.generatePuzzle(SudokuBoard::Difficulty::Easy);
     GameUI ui(board);
-    // Test ncurses setup: display a message and wait for keypress
-    mvprintw(0, 0, "ncurses initialized. Press any key to exit.");
+    ui.displayBoard();
+    mvprintw(SudokuBoard::SIZE * 2 + 3, 0, "Press 'q' to exit.");
     refresh();
-    getch();
+    int ch;
+    do {
+        ch = getch();
+    } while (ch != 'q' && ch != 'Q');
     return 0;
 }
