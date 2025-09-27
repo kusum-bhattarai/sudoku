@@ -19,7 +19,7 @@ public:
     const std::vector<std::vector<int>>& getBoard() const noexcept { return board_.getBoard(); }
     std::pair<int, int> getCursorPosition() const noexcept { return {cursor_row_, cursor_col_}; }
 
-private:
+protected:
     SudokuBoard& board_;                        // Reference to board
     WINDOW* window_;                            // ncurses window
     int cursor_row_ = 0;                        // Cursor position row

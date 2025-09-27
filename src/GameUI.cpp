@@ -116,10 +116,18 @@ bool GameUI::handleInput() noexcept {
             return false; // Signal to quit
 
         case KEY_UP:
-            cursor_row_ = (cursor_row_ - 1 + SudokuBoard::SIZE) % SudokuBoard::SIZE;
+            cursor_row_--;
+            if (cursor_row_ < 0) {
+                cursor_row_ = SudokuBoard::SIZE - 1;
+                cursor_col_ = (cursor_col_ - 1 + SudokuBoard::SIZE) % SudokuBoard::SIZE;
+            }
             break;
         case KEY_DOWN:
-            cursor_row_ = (cursor_row_ + 1) % SudokuBoard::SIZE;
+            cursor_row_++;
+            if (cursor_row_ >= SudokuBoard::SIZE) {
+                cursor_row_ = 0;
+                cursor_col_ = (cursor_col_ + 1) % SudokuBoard::SIZE;
+            }
             break;
         case KEY_LEFT:
             cursor_col_--;
