@@ -13,14 +13,17 @@ public:
 
     void displayBoard() const noexcept;          // Placeholder for board display
     void showMenu() const noexcept;             // Placeholder for menu
-    void handleInput() noexcept;                // Placeholder for input handling
+    bool handleInput() noexcept;                // changed the type to bool to return false on quit
 
     // Getter for testing
     const std::vector<std::vector<int>>& getBoard() const noexcept { return board_.getBoard(); }
+    std::pair<int, int> getCursorPosition() const noexcept { return {cursor_row_, cursor_col_}; }
 
 private:
     SudokuBoard& board_;                        // Reference to board
     WINDOW* window_;                            // ncurses window
+    int cursor_row_ = 0;                        // Cursor position row
+    int cursor_col_ = 0;                        // Cursor position col
 };
 
 #endif // GAME_UI_HPP

@@ -7,7 +7,8 @@ GameUI::GameUI(SudokuBoard& board) noexcept : board_(board), window_(nullptr) {
     }
     if (has_colors()) {
         start_color();
-        init_pair(1, COLOR_BLUE, COLOR_BLACK);
+        init_pair(1, COLOR_BLUE, COLOR_BLACK);         // for pre-filled cells
+        init_pair(2, COLOR_YELLOW, COLOR_BLACK);       // for user-filled cells
     }
     keypad(window_, TRUE);
     noecho();
@@ -71,12 +72,29 @@ void GameUI::displayBoard() const noexcept {
             int x = col * CELL_WIDTH + LABEL_OFFSET + 2; // Center in cell
             int value = board_.getCell(row, col);
             char ch = (value == 0) ? ' ' : ('0' + value);
+
+            // Highlight the current cursor position
+            if (row == cursor_row_ && col == cursor_col_) {
+                wattron(window_, A_REVERSE);
+            }
+
             if (board_.isPreFilled(row, col)) {
-                attron(COLOR_PAIR(1));
+                wattron(window_, COLOR_PAIR(1));
                 mvwaddch(window_, y, x, ch);
-                attroff(COLOR_PAIR(1));
+                wattroff(window_, COLOR_PAIR(1));
             } else {
-                mvwaddch(window_, y, x, ch);
+                 if(value != 0){
+                    wattron(window_, COLOR_PAIR(2));
+                    mvwaddch(window_, y, x, ch);
+                    wattroff(window_, COLOR_PAIR(2));
+                } else {
+                    mvwaddch(window_, y, x, ch);
+                }
+            }
+
+            // Turn off highlight
+            if (row == cursor_row_ && col == cursor_col_) {
+                wattroff(window_, A_REVERSE);
             }
         }
     }
@@ -84,10 +102,61 @@ void GameUI::displayBoard() const noexcept {
     wrefresh(window_);
 }
 
+
 void GameUI::showMenu() const noexcept {
 
 }
 
-void GameUI::handleInput() noexcept {
+bool GameUI::handleInput() noexcept {
+    if (!window_) return false;
+    int ch = wgetch(window_);
+    switch (ch) {
+        case 'q':
+        case 'Q':
+            return false; // Signal to quit
 
+        case KEY_UP:
+            cursor_row_ = (cursor_row_ - 1 + SudokuBoard::SIZE) % SudokuBoard::SIZE;
+            break;
+        case KEY_DOWN:
+            cursor_row_ = (cursor_row_ + 1) % SudokuBoard::SIZE;
+            break;
+        case KEY_LEFT:
+            cursor_col_--;
+            if (cursor_col_ < 0) {
+                cursor_col_ = SudokuBoard::SIZE - 1;
+                cursor_row_ = (cursor_row_ - 1 + SudokuBoard::SIZE) % SudokuBoard::SIZE;
+            }
+            break;
+        case KEY_RIGHT:
+            cursor_col_++;
+            if (cursor_col_ >= SudokuBoard::SIZE) {
+                cursor_col_ = 0;
+                cursor_row_ = (cursor_row_ + 1) % SudokuBoard::SIZE;
+            }
+            break;
+
+        case '1' ... '9':
+            if (!board_.isPreFilled(cursor_row_, cursor_col_)) {
+                int value = ch - '0';
+                board_.setCell(cursor_row_, cursor_col_, value);
+            } else {
+                flash();
+            }
+            break;
+
+        case KEY_BACKSPACE:
+        case 127: 
+        case '0':
+             if (!board_.isPreFilled(cursor_row_, cursor_col_)) {
+                board_.setCell(cursor_row_, cursor_col_, 0);
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    displayBoard();
+    return true;
 }
