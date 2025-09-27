@@ -115,34 +115,34 @@ bool GameUI::handleInput() noexcept {
         case 'Q':
             return false; // Signal to quit
 
-        case KEY_UP:
-            cursor_row_--;
-            if (cursor_row_ < 0) {
-                cursor_row_ = SudokuBoard::SIZE - 1;
-                cursor_col_ = (cursor_col_ - 1 + SudokuBoard::SIZE) % SudokuBoard::SIZE;
-            }
+        case KEY_RIGHT: {
+            int index = cursor_row_ * SudokuBoard::SIZE + cursor_col_;
+            index = (index + 1) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
+            cursor_row_ = index / SudokuBoard::SIZE;
+            cursor_col_ = index % SudokuBoard::SIZE;
             break;
-        case KEY_DOWN:
-            cursor_row_++;
-            if (cursor_row_ >= SudokuBoard::SIZE) {
-                cursor_row_ = 0;
-                cursor_col_ = (cursor_col_ + 1) % SudokuBoard::SIZE;
-            }
+        }
+        case KEY_LEFT: {
+            int index = cursor_row_ * SudokuBoard::SIZE + cursor_col_;
+            index = (index - 1 + (SudokuBoard::SIZE * SudokuBoard::SIZE)) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
+            cursor_row_ = index / SudokuBoard::SIZE;
+            cursor_col_ = index % SudokuBoard::SIZE;
             break;
-        case KEY_LEFT:
-            cursor_col_--;
-            if (cursor_col_ < 0) {
-                cursor_col_ = SudokuBoard::SIZE - 1;
-                cursor_row_ = (cursor_row_ - 1 + SudokuBoard::SIZE) % SudokuBoard::SIZE;
-            }
+        }
+        case KEY_DOWN: {
+            int index = cursor_col_ * SudokuBoard::SIZE + cursor_row_;
+            index = (index + 1) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
+            cursor_col_ = index / SudokuBoard::SIZE;
+            cursor_row_ = index % SudokuBoard::SIZE;
             break;
-        case KEY_RIGHT:
-            cursor_col_++;
-            if (cursor_col_ >= SudokuBoard::SIZE) {
-                cursor_col_ = 0;
-                cursor_row_ = (cursor_row_ + 1) % SudokuBoard::SIZE;
-            }
+        }
+        case KEY_UP: {
+            int index = cursor_col_ * SudokuBoard::SIZE + cursor_row_;
+            index = (index - 1 + (SudokuBoard::SIZE * SudokuBoard::SIZE)) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
+            cursor_col_ = index / SudokuBoard::SIZE;
+            cursor_row_ = index % SudokuBoard::SIZE;
             break;
+        }
 
         case '1' ... '9':
             if (!board_.isPreFilled(cursor_row_, cursor_col_)) {
