@@ -22,6 +22,32 @@ GameUI::~GameUI() noexcept {
     }
 }
 
+void GameUI::displayWelcomeScreen() const noexcept {
+    if (!window_) return;
+
+    werase(window_);
+    wattron(window_, COLOR_PAIR(4));        // green color for welcome text
+
+    int yMax, xMax;
+    getmaxyx(window_, yMax, xMax);
+
+    // welcome messages
+    const char* line1 = "Wake up...";
+    const char* line2 = "The Sudoku has you.";
+    const char* line3 = "Press any key to enter the matrix.";
+
+    // messages in the center of the screen
+    mvwprintw(window_, yMax / 2 - 2, (xMax - strlen(line1)) / 2, "%s", line1);
+    mvwprintw(window_, yMax / 2, (xMax - strlen(line2)) / 2, "%s", line2);
+    mvwprintw(window_, yMax / 2 + 2, (xMax - strlen(line3)) / 2, "%s", line3);
+
+    wattroff(window_, COLOR_PAIR(4));   
+    wrefresh(window_);
+
+    wgetch(window_); 
+}
+
+
 void GameUI::displayBoard() const noexcept {
     if (!window_) return;
     werase(window_); // Use window-specific clear

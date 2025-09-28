@@ -6,14 +6,15 @@
 
 class GameUI {
 public:
-    explicit GameUI(SudokuBoard& board) noexcept; // Constructor takes board reference
-    ~GameUI() noexcept;                          // Cleanup ncurses
-    GameUI(const GameUI&) = delete;             // No copy
+    explicit GameUI(SudokuBoard& board) noexcept;   // Constructor takes board reference
+    ~GameUI() noexcept;                             // Cleanup ncurses
+    GameUI(const GameUI&) = delete;                 // No copy
     GameUI& operator=(const GameUI&) = delete;
 
-    void displayBoard() const noexcept;          // Placeholder for board display
-    void showMenu() const noexcept;             // Placeholder for menu
-    bool handleInput() noexcept;                // changed the type to bool to return false on quit
+    void displayWelcomeScreen() const noexcept;
+    void displayBoard() const noexcept;          
+    void showMenu() const noexcept;             
+    bool handleInput() noexcept;               
 
     // Getter for testing
     const std::vector<std::vector<int>>& getBoard() const noexcept { return board_.getBoard(); }

@@ -5,7 +5,7 @@ int main() {
     SudokuBoard board;
     board.generatePuzzle(SudokuBoard::Difficulty::Easy);
     GameUI ui(board);
-
+    ui.displayWelcomeScreen();
     ui.displayBoard(); 
 
     while (ui.handleInput()) {
