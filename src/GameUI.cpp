@@ -50,43 +50,45 @@ void GameUI::displayWelcomeScreen() const noexcept {
 
 void GameUI::displayBoard() const noexcept {
     if (!window_) return;
-    werase(window_); // Use window-specific clear
+    werase(window_);
 
-    constexpr int CELL_WIDTH = 5; // | 5 | (3 spaces + borders)
+    constexpr int CELL_WIDTH = 4;
     constexpr int GRID_WIDTH = SudokuBoard::SIZE * CELL_WIDTH + 1;
     constexpr int GRID_HEIGHT = SudokuBoard::SIZE * 2 + 1;
-    constexpr int LABEL_OFFSET = 2; // Space for labels (A-I, 1-9)
+    constexpr int LABEL_OFFSET = 2; 
+
+    int yMax, xMax;
+    getmaxyx(window_, yMax, xMax);
+
+    int start_y = (yMax - GRID_HEIGHT - LABEL_OFFSET) / 2;
+    int start_x = (xMax - GRID_WIDTH - LABEL_OFFSET) / 2;
 
     // Draw column labels (A-I)
     for (int col = 0; col < SudokuBoard::SIZE; ++col) {
-        mvwaddch(window_, LABEL_OFFSET - 1, col * CELL_WIDTH + 3, 'A' + col);
+        mvwaddch(window_, start_y, start_x + col * CELL_WIDTH + LABEL_OFFSET + (CELL_WIDTH/2), 'A' + col);
     }
 
     // Draw row labels (1-9)
     for (int row = 0; row < SudokuBoard::SIZE; ++row) {
-        mvwaddch(window_, row * 2 + LABEL_OFFSET + 1, 0, '1' + row);
+        mvwaddch(window_, start_y + row * 2 + 1 + LABEL_OFFSET, start_x, '1' + row);
     }
 
-    // Draw vertical lines
+    // Draw grid lines (remains the same)
     for (int i = 0; i <= SudokuBoard::SIZE; ++i) {
-        int x = i * CELL_WIDTH + LABEL_OFFSET;
+        int x = start_x + i * CELL_WIDTH + LABEL_OFFSET;
         char vchar = (i % 3 == 0) ? '#' : '|';
-        mvwvline(window_, LABEL_OFFSET, x, vchar, GRID_HEIGHT);
+        mvwvline(window_, start_y + LABEL_OFFSET, x, vchar, GRID_HEIGHT -1);
     }
-
-    // Draw horizontal lines
     for (int i = 0; i <= SudokuBoard::SIZE; ++i) {
-        int y = i * 2 + LABEL_OFFSET;
+        int y = start_y + i * 2 + LABEL_OFFSET;
         char hchar = (i % 3 == 0) ? '=' : '-';
-        mvwhline(window_, y, LABEL_OFFSET, hchar, GRID_WIDTH);
+        mvwhline(window_, y, start_x + LABEL_OFFSET, hchar, GRID_WIDTH-1);
     }
-
-    // Draw intersections
     for (int i = 0; i <= SudokuBoard::SIZE; ++i) {
         for (int j = 0; j <= SudokuBoard::SIZE; ++j) {
-            int y = i * 2 + LABEL_OFFSET;
-            int x = j * CELL_WIDTH + LABEL_OFFSET;
-            char c = (i % 3 == 0 && j % 3 == 0) ? '#' : '+';
+            int y = start_y + i * 2 + LABEL_OFFSET;
+            int x = start_x + j * CELL_WIDTH + LABEL_OFFSET;
+            char c = (i % 3 == 0 && j % 3 == 0) ? '#' : ( (i%3==0) ? '=': ((j%3==0)?'#':'|'));
             mvwaddch(window_, y, x, c);
         }
     }
@@ -94,34 +96,23 @@ void GameUI::displayBoard() const noexcept {
     // Draw cell contents
     for (int row = 0; row < SudokuBoard::SIZE; ++row) {
         for (int col = 0; col < SudokuBoard::SIZE; ++col) {
-            int y = row * 2 + LABEL_OFFSET + 1;
-            int x = col * CELL_WIDTH + LABEL_OFFSET + 2; // Center in cell
+            int y = start_y + row * 2 + 1 + LABEL_OFFSET;
+            int x = start_x + col * CELL_WIDTH + 2 + LABEL_OFFSET;
             int value = board_.getCell(row, col);
-            char ch = (value == 0) ? ' ' : ('0' + value);
+            char ch = (value == 0) ? '.' : ('0' + value);
 
-            // Highlight the current cursor position
-            if (row == cursor_row_ && col == cursor_col_) {
-                wattron(window_, A_REVERSE);
-            }
-
+            int attribute = A_NORMAL; 
             if (board_.isPreFilled(row, col)) {
-                wattron(window_, COLOR_PAIR(1));
-                mvwaddch(window_, y, x, ch);
-                wattroff(window_, COLOR_PAIR(1));
-            } else {
-                 if(value != 0){
-                    wattron(window_, COLOR_PAIR(2));
-                    mvwaddch(window_, y, x, ch);
-                    wattroff(window_, COLOR_PAIR(2));
-                } else {
-                    mvwaddch(window_, y, x, ch);
-                }
+                attribute = COLOR_PAIR(1); // Blue for pre-filled
+            } else if (value != 0) {
+                attribute = COLOR_PAIR(2); // Yellow for user-entered
             }
-
-            // Turn off highlight
             if (row == cursor_row_ && col == cursor_col_) {
-                wattroff(window_, A_REVERSE);
+                attribute |= A_REVERSE;
             }
+            wattron(window_, attribute);
+            mvwaddch(window_, y, x, ch);
+            wattroff(window_, attribute);
         }
     }
 
