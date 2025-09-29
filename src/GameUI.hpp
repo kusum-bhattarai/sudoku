@@ -21,6 +21,9 @@ public:
     std::pair<int, int> getCursorPosition() const noexcept { return {cursor_row_, cursor_col_}; }
 
 protected:
+    void drawBoardWindow() const noexcept; 
+    void drawMenuWindow() const noexcept;
+
     SudokuBoard& board_;                        // Reference to board
     WINDOW* window_;                            // ncurses window
     int cursor_row_ = 0;                        // Cursor position row

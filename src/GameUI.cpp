@@ -1,4 +1,5 @@
 #include "GameUI.hpp"
+#include <string>
 
 GameUI::GameUI(SudokuBoard& board) noexcept : board_(board), window_(nullptr) {
     window_ = initscr();
@@ -17,6 +18,24 @@ GameUI::GameUI(SudokuBoard& board) noexcept : board_(board), window_(nullptr) {
     cbreak();
     curs_set(0); 
     mousemask(0, NULL);
+
+    // --- Creating sub-windows for board and menu ---
+    int yMax, xMax;
+    getmaxyx(window_, yMax, xMax);
+
+    // Windows dimensions
+    constexpr int BOARD_WIN_HEIGHT = 19;         // 9 * 2 + 1
+    constexpr int BOARD_WIN_WIDTH = 37;          // 9 * 4 + 1
+    constexpr int MENU_WIN_WIDTH = 25;
+    constexpr int SPACING = 2;
+
+    // Center the whole layout
+    int total_layout_width = BOARD_WIN_WIDTH + SPACING + MENU_WIN_WIDTH;
+    int start_y = (yMax - BOARD_WIN_HEIGHT) / 2;
+    int start_x = (xMax - total_layout_width) / 2;
+
+    board_win_ = newwin(BOARD_WIN_HEIGHT, BOARD_WIN_WIDTH, start_y, start_x);
+    menu_win_ = newwin(BOARD_WIN_HEIGHT, MENU_WIN_WIDTH, start_y, start_x + BOARD_WIN_WIDTH + SPACING);
 }
 
 GameUI::~GameUI() noexcept {
@@ -29,6 +48,15 @@ GameUI::~GameUI() noexcept {
     if (window_) {
         endwin();
     }
+}
+
+void GameUI::displayBoard() const noexcept {
+    if (!window_ || !board_win_ || !menu_win_) return;
+    werase(window_); // Clear the main screen
+    wrefresh(window_);
+
+    drawBoardWindow(); // Draw the board in its window
+    drawMenuWindow();  // Draw the menu in its window
 }
 
 void GameUI::displayWelcomeScreen() const noexcept {
@@ -56,81 +84,73 @@ void GameUI::displayWelcomeScreen() const noexcept {
     wgetch(window_); 
 }
 
+void GameUI::drawBoardWindow() const noexcept {
+    werase(board_win_);
 
-void GameUI::displayBoard() const noexcept {
-    if (!window_) return;
-    werase(window_);
-
-    constexpr int CELL_WIDTH = 4;
-    constexpr int GRID_WIDTH = SudokuBoard::SIZE * CELL_WIDTH + 1;
-    constexpr int GRID_HEIGHT = SudokuBoard::SIZE * 2 + 1;
-    constexpr int LABEL_OFFSET = 2; 
-
-    int yMax, xMax;
-    getmaxyx(window_, yMax, xMax);
-
-    int start_y = (yMax - GRID_HEIGHT - LABEL_OFFSET) / 2;
-    int start_x = (xMax - GRID_WIDTH - LABEL_OFFSET) / 2;
-
-    // Draw column labels (A-I)
-    for (int col = 0; col < SudokuBoard::SIZE; ++col) {
-        mvwaddch(window_, start_y, start_x + col * CELL_WIDTH + LABEL_OFFSET + (CELL_WIDTH/2), 'A' + col);
-    }
-
-    // Draw row labels (1-9)
-    for (int row = 0; row < SudokuBoard::SIZE; ++row) {
-        mvwaddch(window_, start_y + row * 2 + 1 + LABEL_OFFSET, start_x, '1' + row);
-    }
-
-    // Draw grid lines (remains the same)
-    for (int i = 0; i <= SudokuBoard::SIZE; ++i) {
-        int x = start_x + i * CELL_WIDTH + LABEL_OFFSET;
-        char vchar = (i % 3 == 0) ? '#' : '|';
-        mvwvline(window_, start_y + LABEL_OFFSET, x, vchar, GRID_HEIGHT -1);
-    }
-    for (int i = 0; i <= SudokuBoard::SIZE; ++i) {
-        int y = start_y + i * 2 + LABEL_OFFSET;
-        char hchar = (i % 3 == 0) ? '=' : '-';
-        mvwhline(window_, y, start_x + LABEL_OFFSET, hchar, GRID_WIDTH-1);
-    }
-    for (int i = 0; i <= SudokuBoard::SIZE; ++i) {
-        for (int j = 0; j <= SudokuBoard::SIZE; ++j) {
-            int y = start_y + i * 2 + LABEL_OFFSET;
-            int x = start_x + j * CELL_WIDTH + LABEL_OFFSET;
-            char c = (i % 3 == 0 && j % 3 == 0) ? '#' : ( (i%3==0) ? '=': ((j%3==0)?'#':'|'));
-            mvwaddch(window_, y, x, c);
+    // Draw grid lines
+    for (int i = 0; i <= 9; ++i) {
+        if (i % 3 == 0) {
+            wattron(board_win_, A_BOLD);
+        }
+        mvwvline(board_win_, 0, i * 4, ACS_VLINE, 19);
+        mvwhline(board_win_, i * 2, 0, ACS_HLINE, 37);
+        if (i % 3 == 0) {
+            wattroff(board_win_, A_BOLD);
         }
     }
-
+    
     // Draw cell contents
-    for (int row = 0; row < SudokuBoard::SIZE; ++row) {
-        for (int col = 0; col < SudokuBoard::SIZE; ++col) {
-            int y = start_y + row * 2 + 1 + LABEL_OFFSET;
-            int x = start_x + col * CELL_WIDTH + 2 + LABEL_OFFSET;
+    for (int row = 0; row < 9; ++row) {
+        for (int col = 0; col < 9; ++col) {
             int value = board_.getCell(row, col);
             char ch = (value == 0) ? '.' : ('0' + value);
 
-            int attribute = A_NORMAL; 
+            int attribute = A_NORMAL;
             if (board_.isPreFilled(row, col)) {
-                attribute = COLOR_PAIR(1); // Blue for pre-filled
+                attribute = COLOR_PAIR(1);
             } else if (value != 0) {
-                attribute = COLOR_PAIR(2); // Yellow for user-entered
+                attribute = COLOR_PAIR(2);
             }
+
             if (row == cursor_row_ && col == cursor_col_) {
                 attribute |= A_REVERSE;
             }
-            wattron(window_, attribute);
-            mvwaddch(window_, y, x, ch);
-            wattroff(window_, attribute);
+
+            wattron(board_win_, attribute);
+            mvwaddch(board_win_, row * 2 + 1, col * 4 + 2, ch);
+            wattroff(board_win_, attribute);
         }
     }
-
-    wrefresh(window_);
+    
+    box(board_win_, 0, 0); 
+    wrefresh(board_win_);
 }
 
+void GameUI::drawMenuWindow() const noexcept {
+    werase(menu_win_);
+    
+    box(menu_win_, 0, 0); 
 
-void GameUI::showMenu() const noexcept {
+    // Title
+    wattron(menu_win_, A_BOLD | COLOR_PAIR(4));
+    mvwprintw(menu_win_, 1, (25 - 10) / 2, "[ MATRIX ]");
+    wattroff(menu_win_, A_BOLD | COLOR_PAIR(4));
 
+    // Controls
+    mvwprintw(menu_win_, 3, 2, "[ CONTROLS ]");
+    mvwprintw(menu_win_, 4, 3, "Arrows: Move Cursor");
+    mvwprintw(menu_win_, 5, 3, "1-9   : Enter Number");
+    mvwprintw(menu_win_, 6, 3, "Del/0 : Clear Cell");
+
+    // Actions
+    mvwprintw(menu_win_, 9, 2, "[ ACTIONS ]");
+    mvwprintw(menu_win_, 10, 3, "Submit");
+    mvwprintw(menu_win_, 11, 3, "Undo");
+    mvwprintw(menu_win_, 12, 3, "Hint");
+    mvwprintw(menu_win_, 13, 3, "New Game");
+    mvwprintw(menu_win_, 14, 3, "Quit");
+
+    wrefresh(menu_win_);
 }
 
 bool GameUI::handleInput() noexcept {
