@@ -132,3 +132,8 @@ TEST_F(GameUITest, HandleInput_ReturnsTrueOnOtherKeys) {
     EXPECT_TRUE(ui.simulateKeyPress(KEY_UP));
     EXPECT_TRUE(ui.simulateKeyPress('5'));
 }
+
+TEST_F(GameUITest, Constructor_InitializesUIState) {
+    EXPECT_EQ(ui.getFocus(), GameUI::FocusState::BOARD) << "Focus should initially be on the board";
+    EXPECT_EQ(ui.getSelectedMenuItem(), 0) << "Selected menu item should initially be 0";
+}

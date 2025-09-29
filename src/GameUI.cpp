@@ -12,6 +12,7 @@ GameUI::GameUI(SudokuBoard& board) noexcept : board_(board), window_(nullptr) {
         init_pair(2, COLOR_YELLOW, COLOR_BLACK);
         init_pair(3, COLOR_RED, COLOR_BLACK);
         init_pair(4, COLOR_GREEN, COLOR_BLACK); 
+        init_pair(5, COLOR_BLACK, COLOR_WHITE);
     }
     keypad(window_, TRUE);
     noecho();
@@ -89,47 +90,39 @@ void GameUI::drawBoardWindow() const noexcept {
 
     // Draw grid lines
     for (int i = 0; i <= 9; ++i) {
-        if (i % 3 == 0) {
-            wattron(board_win_, A_BOLD);
-        }
+        if (i % 3 == 0) wattron(board_win_, A_BOLD);
         mvwvline(board_win_, 0, i * 4, ACS_VLINE, 19);
         mvwhline(board_win_, i * 2, 0, ACS_HLINE, 37);
-        if (i % 3 == 0) {
-            wattroff(board_win_, A_BOLD);
-        }
+        if (i % 3 == 0) wattroff(board_win_, A_BOLD);
     }
-    
+
     // Draw cell contents
     for (int row = 0; row < 9; ++row) {
         for (int col = 0; col < 9; ++col) {
             int value = board_.getCell(row, col);
             char ch = (value == 0) ? '.' : ('0' + value);
-
             int attribute = A_NORMAL;
             if (board_.isPreFilled(row, col)) {
                 attribute = COLOR_PAIR(1);
             } else if (value != 0) {
                 attribute = COLOR_PAIR(2);
             }
-
-            if (row == cursor_row_ && col == cursor_col_) {
+            if (focus_ == FocusState::BOARD && row == cursor_row_ && col == cursor_col_) {
                 attribute |= A_REVERSE;
             }
-
+             
             wattron(board_win_, attribute);
             mvwaddch(board_win_, row * 2 + 1, col * 4 + 2, ch);
             wattroff(board_win_, attribute);
         }
     }
-    
-    box(board_win_, 0, 0); 
+    box(board_win_, 0, 0);
     wrefresh(board_win_);
 }
 
 void GameUI::drawMenuWindow() const noexcept {
     werase(menu_win_);
-    
-    box(menu_win_, 0, 0); 
+    box(menu_win_, 0, 0);
 
     // Title
     wattron(menu_win_, A_BOLD | COLOR_PAIR(4));
@@ -138,17 +131,20 @@ void GameUI::drawMenuWindow() const noexcept {
 
     // Controls
     mvwprintw(menu_win_, 3, 2, "[ CONTROLS ]");
-    mvwprintw(menu_win_, 4, 3, "Arrows: Move Cursor");
-    mvwprintw(menu_win_, 5, 3, "1-9   : Enter Number");
-    mvwprintw(menu_win_, 6, 3, "Del/0 : Clear Cell");
+    mvwprintw(menu_win_, 4, 3, "Arrows: Move/Select");
+    mvwprintw(menu_win_, 5, 3, "Tab   : Switch Focus");
+    mvwprintw(menu_win_, 6, 3, "Enter : Select Action");
 
-    // Actions
     mvwprintw(menu_win_, 9, 2, "[ ACTIONS ]");
-    mvwprintw(menu_win_, 10, 3, "Submit");
-    mvwprintw(menu_win_, 11, 3, "Undo");
-    mvwprintw(menu_win_, 12, 3, "Hint");
-    mvwprintw(menu_win_, 13, 3, "New Game");
-    mvwprintw(menu_win_, 14, 3, "Quit");
+    for (int i = 0; i < menu_items_.size(); ++i) {
+        if (focus_ == FocusState::MENU && i == selected_menu_item_) {
+            wattron(menu_win_, COLOR_PAIR(5)); // Highlight selected item
+        }
+        mvwprintw(menu_win_, 10 + i, 3, menu_items_[i].c_str());
+        if (focus_ == FocusState::MENU && i == selected_menu_item_) {
+            wattroff(menu_win_, COLOR_PAIR(5));
+        }
+    }
 
     wrefresh(menu_win_);
 }
