@@ -7,18 +7,27 @@ GameUI::GameUI(SudokuBoard& board) noexcept : board_(board), window_(nullptr) {
     }
     if (has_colors()) {
         start_color();
-        init_pair(1, COLOR_BLUE, COLOR_BLACK);         // for pre-filled cells
-        init_pair(2, COLOR_YELLOW, COLOR_BLACK);       // for user-filled cells
+        init_pair(1, COLOR_BLUE, COLOR_BLACK);
+        init_pair(2, COLOR_YELLOW, COLOR_BLACK);
+        init_pair(3, COLOR_RED, COLOR_BLACK);
+        init_pair(4, COLOR_GREEN, COLOR_BLACK); 
     }
     keypad(window_, TRUE);
     noecho();
     cbreak();
-    curs_set(0); // Hide cursor
+    curs_set(0); 
+    mousemask(0, NULL);
 }
 
 GameUI::~GameUI() noexcept {
+    if (board_win_) {
+        delwin(board_win_); 
+    }
+    if (menu_win_) {
+        delwin(menu_win_);  
+    }
     if (window_) {
-        endwin();                 // Cleanup ncurses
+        endwin();
     }
 }
 

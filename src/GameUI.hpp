@@ -25,6 +25,10 @@ protected:
     WINDOW* window_;                            // ncurses window
     int cursor_row_ = 0;                        // Cursor position row
     int cursor_col_ = 0;                        // Cursor position col
+
+    // Separate sub-windows for board and menu
+    WINDOW* board_win_ = nullptr; 
+    WINDOW* menu_win_ = nullptr;
 };
 
 #endif // GAME_UI_HPP
