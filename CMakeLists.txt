@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find ncurses (required for UI)
+set(CMAKE_PREFIX_PATH "/opt/homebrew")
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})
 
@@ -14,6 +15,7 @@ include_directories(${CURSES_INCLUDE_DIR})
 add_executable(sudoku
     src/main.cpp
     src/SudokuBoard.cpp
+    src/GameUI.cpp
 )
 target_include_directories(sudoku PRIVATE src)
 target_link_libraries(sudoku PRIVATE ${CURSES_LIBRARIES})
