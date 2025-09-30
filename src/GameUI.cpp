@@ -101,6 +101,7 @@ void GameUI::drawBoardWindow() const noexcept {
         for (int col = 0; col < 9; ++col) {
             int value = board_.getCell(row, col);
             char ch = (value == 0) ? '.' : ('0' + value);
+
             int attribute = A_NORMAL;
             if (board_.isPreFilled(row, col)) {
                 attribute = COLOR_PAIR(1);
@@ -110,7 +111,7 @@ void GameUI::drawBoardWindow() const noexcept {
             if (focus_ == FocusState::BOARD && row == cursor_row_ && col == cursor_col_) {
                 attribute |= A_REVERSE;
             }
-             
+
             wattron(board_win_, attribute);
             mvwaddch(board_win_, row * 2 + 1, col * 4 + 2, ch);
             wattroff(board_win_, attribute);
@@ -151,60 +152,87 @@ void GameUI::drawMenuWindow() const noexcept {
 
 bool GameUI::handleInput() noexcept {
     if (!window_) return false;
+    displayBoard();
     int ch = wgetch(window_);
-    switch (ch) {
-        case 'q':
-        case 'Q':
-            return false; // Signal to quit
 
-        case KEY_RIGHT: {
-            int index = cursor_row_ * SudokuBoard::SIZE + cursor_col_;
-            index = (index + 1) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
-            cursor_row_ = index / SudokuBoard::SIZE;
-            cursor_col_ = index % SudokuBoard::SIZE;
-            break;
-        }
-        case KEY_LEFT: {
-            int index = cursor_row_ * SudokuBoard::SIZE + cursor_col_;
-            index = (index - 1 + (SudokuBoard::SIZE * SudokuBoard::SIZE)) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
-            cursor_row_ = index / SudokuBoard::SIZE;
-            cursor_col_ = index % SudokuBoard::SIZE;
-            break;
-        }
-        case KEY_DOWN: {
-            int index = cursor_col_ * SudokuBoard::SIZE + cursor_row_;
-            index = (index + 1) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
-            cursor_col_ = index / SudokuBoard::SIZE;
-            cursor_row_ = index % SudokuBoard::SIZE;
-            break;
-        }
-        case KEY_UP: {
-            int index = cursor_col_ * SudokuBoard::SIZE + cursor_row_;
-            index = (index - 1 + (SudokuBoard::SIZE * SudokuBoard::SIZE)) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
-            cursor_col_ = index / SudokuBoard::SIZE;
-            cursor_row_ = index % SudokuBoard::SIZE;
-            break;
-        }
+    if (focus_ == FocusState::BOARD) {
+        switch (ch) {
+            case '\t': // Tab key
+                focus_ = FocusState::MENU;
+                break;
+            case 'q':
+            case 'Q':
+                return false; // Signal to quit
 
-        case '1' ... '9':
-            if (!board_.isPreFilled(cursor_row_, cursor_col_)) {
-                int value = ch - '0';
-                board_.setCell(cursor_row_, cursor_col_, value);
-            } else {
-                flash();
+            case KEY_RIGHT: {
+                int index = cursor_row_ * SudokuBoard::SIZE + cursor_col_;
+                index = (index + 1) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
+                cursor_row_ = index / SudokuBoard::SIZE;
+                cursor_col_ = index % SudokuBoard::SIZE;
+                break;
             }
-            break;
-
-        case KEY_BACKSPACE:
-        case 127: 
-        case '0':
-             if (!board_.isPreFilled(cursor_row_, cursor_col_)) {
-                board_.setCell(cursor_row_, cursor_col_, 0);
+            case KEY_LEFT: {
+                int index = cursor_row_ * SudokuBoard::SIZE + cursor_col_;
+                index = (index - 1 + (SudokuBoard::SIZE * SudokuBoard::SIZE)) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
+                cursor_row_ = index / SudokuBoard::SIZE;
+                cursor_col_ = index % SudokuBoard::SIZE;
+                break;
             }
-            break;
+            case KEY_DOWN: {
+                int index = cursor_col_ * SudokuBoard::SIZE + cursor_row_;
+                index = (index + 1) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
+                cursor_col_ = index / SudokuBoard::SIZE;
+                cursor_row_ = index % SudokuBoard::SIZE;
+                break;
+            }
+            case KEY_UP: {
+                int index = cursor_col_ * SudokuBoard::SIZE + cursor_row_;
+                index = (index - 1 + (SudokuBoard::SIZE * SudokuBoard::SIZE)) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
+                cursor_col_ = index / SudokuBoard::SIZE;
+                cursor_row_ = index % SudokuBoard::SIZE;
+                break;
+            }
 
-        default:
-            break;
+            case '1' ... '9':
+                if (!board_.isPreFilled(cursor_row_, cursor_col_)) {
+                    int value = ch - '0';
+                    board_.setCell(cursor_row_, cursor_col_, value);
+                } else {
+                    flash();
+                }
+                break;
+
+            case KEY_BACKSPACE:
+            case 127: 
+            case '0':
+                if (!board_.isPreFilled(cursor_row_, cursor_col_)) {
+                    board_.setCell(cursor_row_, cursor_col_, 0);
+                }
+                break;
+
+            default:
+                break;
+        }
+    } else { 
+        switch (ch) {
+            case '\t': // Tab key
+                focus_ = FocusState::BOARD;
+                break;
+            case KEY_UP:
+                selected_menu_item_ = (selected_menu_item_ - 1 + menu_items_.size()) % menu_items_.size();
+                break;
+            case KEY_DOWN:
+                selected_menu_item_ = (selected_menu_item_ + 1) % menu_items_.size();
+                break;
+            case '\n': // Enter key
+            case KEY_ENTER:
+                if (menu_items_[selected_menu_item_] == "Quit") {
+                    return false; // Signal to quit
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     displayBoard();
