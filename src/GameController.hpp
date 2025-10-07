@@ -11,6 +11,7 @@ public:
 
 private:
     void processInput(int ch) noexcept;     // Process input based on current focus
+    void handleSubmit() noexcept;           // Handle submit action
 
     SudokuBoard board_;
     GameUI ui_;

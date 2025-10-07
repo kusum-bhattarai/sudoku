@@ -13,6 +13,21 @@ void GameController::run() noexcept {
     }
 }
 
+void GameController::handleSubmit() noexcept {
+    if (!board_.isFull()) {
+        ui_.displayMessage("Board is not full yet!");
+        return;
+    }
+
+    if (board_.isValid()) {
+        ui_.displayMessage("Congratulations! You solved it!");
+        is_running_ = false;    // End the game if solved
+    } else {
+        ui_.displayMessage("There are mistakes. Keep trying!");
+        // will highlight specific errors in future
+    }
+}
+
 void GameController::processInput(int ch) noexcept {
     if (ui_.getFocus() == GameUI::FocusState::BOARD) {
         auto [row, col] = ui_.getCursorPosition();
@@ -77,12 +92,16 @@ void GameController::processInput(int ch) noexcept {
                 ui_.setSelectedMenuItem((current_item + 1) % menu_items.size());
                 break;
             case '\n':
-            case KEY_ENTER:
-                if (menu_items[current_item] == "Quit") {
+            case KEY_ENTER: { 
+                const std::string& selected_item = menu_items[current_item];
+                if (selected_item == "Quit") {
                     is_running_ = false;
+                } else if (selected_item == "Submit") {
+                    handleSubmit(); 
                 }
                 // More actions will go here
                 break;
+            }
         }
     }
 }

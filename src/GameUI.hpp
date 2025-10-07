@@ -15,7 +15,8 @@ public:
     void displayWelcomeScreen() const noexcept;
     void displayBoard() const noexcept;          
     void showMenu() const noexcept;             
-    int getPressedKey() const noexcept;    
+    int getPressedKey() const noexcept;  
+    void displayMessage(const std::string& message) const noexcept;  
     
     // setters for gamecontroller 
     void setFocus(FocusState new_focus) noexcept;

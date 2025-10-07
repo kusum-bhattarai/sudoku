@@ -150,6 +150,25 @@ void GameUI::drawMenuWindow() const noexcept {
     wrefresh(menu_win_);
 }
 
+void GameUI::displayMessage(const std::string& message) const noexcept {
+    int yMax, xMax;
+    getmaxyx(window_, yMax, xMax);
+
+    int msg_width = message.length() + 4;
+    int msg_height = 3;
+    int start_y = (yMax - msg_height) / 2;
+    int start_x = (xMax - msg_width) / 2;
+
+    WINDOW* msg_win = newwin(msg_height, msg_width, start_y, start_x);
+    box(msg_win, 0, 0);
+    mvwprintw(msg_win, 1, 2, message.c_str());
+    wrefresh(msg_win);
+
+    wgetch(window_); // Wait for any key press
+
+    delwin(msg_win);
+}
+
 int GameUI::getPressedKey() const noexcept {
     return wgetch(window_);
 }
