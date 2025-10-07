@@ -10,8 +10,11 @@ public:
     void run() noexcept;
 
 private:
+    void processInput(int ch) noexcept;     // Process input based on current focus
+
     SudokuBoard board_;
     GameUI ui_;
+    bool is_running_ = true;
 };
 
 #endif // GAME_CONTROLLER_HPP

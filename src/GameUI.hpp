@@ -15,12 +15,19 @@ public:
     void displayWelcomeScreen() const noexcept;
     void displayBoard() const noexcept;          
     void showMenu() const noexcept;             
-    bool handleInput() noexcept;               
+    int getPressedKey() const noexcept;    
+    
+    // setters for gamecontroller 
+    void setFocus(FocusState new_focus) noexcept;
+    void setCursorPosition(int row, int col) noexcept;
+    void setSelectedMenuItem(int item) noexcept;
+    void flashScreen() const noexcept;
 
     // Getter for testing
     const std::vector<std::vector<int>>& getBoard() const noexcept { return board_.getBoard(); }
     std::pair<int, int> getCursorPosition() const noexcept { return {cursor_row_, cursor_col_}; }
     FocusState getFocus() const noexcept { return focus_; } 
+    const std::vector<std::string>& getMenuItems() const noexcept { return menu_items_; }
     int getSelectedMenuItem() const noexcept { return selected_menu_item_; } 
 
 
