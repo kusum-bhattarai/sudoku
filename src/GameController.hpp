@@ -4,10 +4,17 @@
 #include "SudokuBoard.hpp"
 #include "GameUI.hpp"
 
+class GameControllerTest_SubmitIncompleteBoard_Test;
+class GameControllerTest_SubmitIncorrectBoard_Test;
+class GameControllerTest_SubmitCorrectBoard_Test;
 class GameController {
+    friend class GameControllerTest_SubmitIncompleteBoard_Test;
+    friend class GameControllerTest_SubmitIncorrectBoard_Test;
+    friend class GameControllerTest_SubmitCorrectBoard_Test;
 public:
     GameController() noexcept;
     void run() noexcept;
+    bool isRunning() const noexcept { return is_running_; }
 
 private:
     void processInput(int ch) noexcept;     // Process input based on current focus

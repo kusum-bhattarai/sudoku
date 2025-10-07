@@ -30,6 +30,7 @@ public:
     FocusState getFocus() const noexcept { return focus_; } 
     const std::vector<std::string>& getMenuItems() const noexcept { return menu_items_; }
     int getSelectedMenuItem() const noexcept { return selected_menu_item_; } 
+    std::string getLastMessage() const { return last_message_; }
 
 
 protected:
@@ -43,6 +44,7 @@ protected:
     FocusState focus_ = FocusState::BOARD;      // Start with focus on the board
     int selected_menu_item_ = 0;                // Selected menu item index
     const std::vector<std::string> menu_items_ = {"Submit", "Undo", "Hint", "New Game", "Quit"};
+    mutable std::string last_message_;         // Store last message for testing
 
     // Separate sub-windows for board and menu
     WINDOW* board_win_ = nullptr; 
