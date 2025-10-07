@@ -21,15 +21,17 @@ void GameController::handleSubmit() noexcept {
 
     if (board_.isValid()) {
         ui_.displayMessage("Congratulations! You solved it!");
-        is_running_ = false;    // End the game if solved
+        is_running_ = false;
     } else {
-        ui_.displayMessage("There are mistakes. Keep trying!");
-        // will highlight specific errors in future
+        auto errors = board_.findErrors();
+        ui_.setErrors(errors);
+        ui_.displayMessage("Your mistakes are highlighted in red!");
     }
 }
 
-void GameController::processInput(int ch) noexcept {
+void GameController::processInput(int ch) noexcept {        
     if (ui_.getFocus() == GameUI::FocusState::BOARD) {
+        ui_.setErrors({});
         auto [row, col] = ui_.getCursorPosition();
         switch (ch) {
             case 'q':

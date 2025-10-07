@@ -23,6 +23,7 @@ public:
     void setCursorPosition(int row, int col) noexcept;
     void setSelectedMenuItem(int item) noexcept;
     void flashScreen() const noexcept;
+    void setErrors(const std::vector<std::pair<int, int>>& errors) noexcept;
 
     // Getter for testing
     const std::vector<std::vector<int>>& getBoard() const noexcept { return board_.getBoard(); }
@@ -45,6 +46,7 @@ protected:
     int selected_menu_item_ = 0;                // Selected menu item index
     const std::vector<std::string> menu_items_ = {"Submit", "Undo", "Hint", "New Game", "Quit"};
     mutable std::string last_message_;         // Store last message for testing
+    std::vector<std::pair<int, int>> error_cells_;  // Cells that are in error state
 
     // Separate sub-windows for board and menu
     WINDOW* board_win_ = nullptr; 

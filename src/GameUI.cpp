@@ -2,6 +2,7 @@
 #include <string>
 #include <unistd.h> // for isatty
 #include <stdio.h>  // for fileno
+#include <set>
 
 GameUI::GameUI(SudokuBoard& board) noexcept : board_(board), window_(nullptr) {
     window_ = initscr();
@@ -87,8 +88,14 @@ void GameUI::displayWelcomeScreen() const noexcept {
     wgetch(window_); 
 }
 
+void GameUI::setErrors(const std::vector<std::pair<int, int>>& errors) noexcept {
+    error_cells_ = errors;
+}
+
 void GameUI::drawBoardWindow() const noexcept {
     werase(board_win_);
+
+    std::set<std::pair<int, int>> error_set(error_cells_.begin(), error_cells_.end());
 
     // Draw grid lines
     for (int i = 0; i <= 9; ++i) {
@@ -105,11 +112,15 @@ void GameUI::drawBoardWindow() const noexcept {
             char ch = (value == 0) ? '.' : ('0' + value);
 
             int attribute = A_NORMAL;
-            if (board_.isPreFilled(row, col)) {
-                attribute = COLOR_PAIR(1);
+            // Check for error first, as it has the highest priority
+            if (error_set.count({row, col})) {
+                attribute = COLOR_PAIR(3); // Red for error
+            } else if (board_.isPreFilled(row, col)) {
+                attribute = COLOR_PAIR(1); // Blue for pre-filled
             } else if (value != 0) {
-                attribute = COLOR_PAIR(2);
+                attribute = COLOR_PAIR(2); // Yellow for user-entered
             }
+
             if (focus_ == FocusState::BOARD && row == cursor_row_ && col == cursor_col_) {
                 attribute |= A_REVERSE;
             }
@@ -119,6 +130,7 @@ void GameUI::drawBoardWindow() const noexcept {
             wattroff(board_win_, attribute);
         }
     }
+    
     box(board_win_, 0, 0);
     wrefresh(board_win_);
 }
