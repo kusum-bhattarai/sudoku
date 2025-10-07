@@ -1,16 +1,7 @@
-#include "GameUI.hpp"
-#include "SudokuBoard.hpp"
+#include "GameController.hpp"
 
 int main() {
-    SudokuBoard board;
-    board.generatePuzzle(SudokuBoard::Difficulty::Easy);
-    GameUI ui(board);
-    ui.displayWelcomeScreen();
-    ui.displayBoard(); 
-
-    while (ui.handleInput()) {
-        // Loop body can be empty as all handling is done in handleInput
-    }
-    
+    GameController game;
+    game.run();
     return 0;
 }

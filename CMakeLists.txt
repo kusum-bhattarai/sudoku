@@ -16,6 +16,7 @@ add_executable(sudoku
     src/main.cpp
     src/SudokuBoard.cpp
     src/GameUI.cpp
+    src/GameController.cpp
 )
 target_include_directories(sudoku PRIVATE src)
 target_link_libraries(sudoku PRIVATE ${CURSES_LIBRARIES})
