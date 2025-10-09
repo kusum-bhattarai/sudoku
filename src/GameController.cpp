@@ -45,17 +45,30 @@ void GameController::handleUndo() noexcept {
 
 void GameController::handleHint() noexcept {
     auto [row, col] = ui_->getCursorPosition();
+
+    // Check if the cell is part of the original puzzle
+    if (board_.isPreFilled(row, col)) {
+        ui_->displayMessage("Cannot provide hint for a pre-filled cell.");
+        return;
+    }
+
+    // Check if the user has run out of hints
+    if (board_.getHintsUsed() >= SudokuBoard::MAX_HINTS) {
+        ui_->displayMessage("You have used all " + std::to_string(SudokuBoard::MAX_HINTS) + " hints.");
+        return;
+    }
     
+    // If checks pass, try to find a valid hint
     std::random_device rd;
     std::mt19937 g(rd());
-
     auto hint = board_.getHint(row, col, g);
 
     if (hint.has_value()) {
         board_.setCell(row, col, hint.value());
-        ui_->displayMessage("Hint provided!");
+        ui_->displayMessage("Hint provided! (" + std::to_string(board_.getHintsUsed()) + "/" + std::to_string(SudokuBoard::MAX_HINTS) + " used)");
     } else {
-        ui_->flashScreen();
+        // This means the board is in an unsolvable state from its current configuration
+        ui_->displayMessage("No hint available. Check for mistakes on the board.");
     }
 }
 
