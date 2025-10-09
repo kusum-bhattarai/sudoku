@@ -59,6 +59,11 @@ void GameController::handleHint() noexcept {
     }
 }
 
+void GameController::handleNewGame() noexcept {
+    board_.generatePuzzle(SudokuBoard::Difficulty::Easy);
+    ui_->setFocus(FocusState::BOARD);
+    ui_->displayMessage("New Easy game started!");
+}
 
 void GameController::processInput(int ch) noexcept {        
     if (ui_->getFocus() == FocusState::BOARD) {
@@ -133,11 +138,11 @@ void GameController::processInput(int ch) noexcept {
                     handleSubmit(); 
                 } else if (selected_item == "Undo") {
                     handleUndo();
-                }
-                else if (selected_item == "Hint") {
+                } else if (selected_item == "Hint") {
                     handleHint();
+                } else if (selected_item == "New Game") { 
+                    handleNewGame();                     
                 }
-                // More actions will go here
                 break;
             }
         }
