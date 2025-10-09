@@ -11,7 +11,6 @@ void GameController::run() noexcept {
     }
     
     board_.generatePuzzle(SudokuBoard::Difficulty::Easy);
-    ui_.displayWelcomeScreen();
 
     while (is_running_) {
         ui_->displayBoard();
