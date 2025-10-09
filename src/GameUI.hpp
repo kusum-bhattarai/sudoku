@@ -5,8 +5,6 @@
 #include "SudokuBoard.hpp"
 #include "IGameUI.hpp" 
 
-enum class FocusState { BOARD, MENU };
-
 class GameUI : public IGameUI { // inheriting from IGameUI
 public:
     explicit GameUI(SudokuBoard& board) noexcept;

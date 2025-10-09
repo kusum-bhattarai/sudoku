@@ -2,19 +2,13 @@
 #define GAME_CONTROLLER_HPP
 
 #include "SudokuBoard.hpp"
-#include "GameUI.hpp"
+#include "IGameUI.hpp"
+#include <memory> // Required for std::unique_ptr
 
-class GameControllerTest_SubmitIncompleteBoard_Test;
-class GameControllerTest_SubmitIncorrectBoard_Test;
-class GameControllerTest_SubmitCorrectBoard_Test;
-class GameControllerTest_UndoAction_Test;
 class GameController {
-    friend class GameControllerTest_SubmitIncompleteBoard_Test;
-    friend class GameControllerTest_SubmitIncorrectBoard_Test;
-    friend class GameControllerTest_SubmitCorrectBoard_Test;
-    friend class GameControllerTest_UndoAction_Test;
 public:
-    GameController() noexcept;
+    explicit GameController(SudokuBoard& board, std::unique_ptr<IGameUI> ui) noexcept;
+    
     void run() noexcept;
     bool isRunning() const noexcept { return is_running_; }
 
@@ -23,8 +17,9 @@ private:
     void handleSubmit() noexcept;           // Handle submit action
     void handleHint() noexcept;             // Handle hint action
     void handleUndo() noexcept;             // Handle undo action
-    SudokuBoard board_;
-    GameUI ui_;
+    
+    SudokuBoard& board_;
+    std::unique_ptr<IGameUI> ui_; // Owns a UI that implements the interface
     bool is_running_ = true;
 };
 
