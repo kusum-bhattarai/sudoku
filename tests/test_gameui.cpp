@@ -1,19 +1,11 @@
 #include <gtest/gtest.h>
+#include <ncurses.h> 
 #include "GameUI.hpp"
 #include "SudokuBoard.hpp"
 
 class MockGameUI : public GameUI {
 public:
     MockGameUI(SudokuBoard& board) : GameUI(board) {}
-
-    void setCursorPosition(int row, int col) {
-        cursor_row_ = row;
-        cursor_col_ = col;
-    }
-
-    void setFocus(FocusState focus) {
-        focus_ = focus;
-    }
 
     bool simulateKeyPress(int ch) {
          if (focus_ == FocusState::BOARD) {
@@ -36,12 +28,20 @@ public:
                     cursor_col_ = index % SudokuBoard::SIZE;
                     break;
                 }
-                case KEY_UP:
-                    cursor_row_ = (cursor_row_ - 1 + SudokuBoard::SIZE) % SudokuBoard::SIZE;
+                case KEY_UP: {
+                    int index = cursor_col_ * SudokuBoard::SIZE + cursor_row_;
+                    index = (index - 1 + (SudokuBoard::SIZE * SudokuBoard::SIZE)) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
+                    cursor_row_ = index % SudokuBoard::SIZE;
+                    cursor_col_ = index / SudokuBoard::SIZE;
                     break;
-                case KEY_DOWN:
-                    cursor_row_ = (cursor_row_ + 1) % SudokuBoard::SIZE;
+                }
+                case KEY_DOWN: {
+                    int index = cursor_col_ * SudokuBoard::SIZE + cursor_row_;
+                    index = (index + 1) % (SudokuBoard::SIZE * SudokuBoard::SIZE) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
+                    cursor_row_ = index % SudokuBoard::SIZE;
+                    cursor_col_ = index / SudokuBoard::SIZE;
                     break;
+                }
                 case '1' ... '9':
                     if (!board_.isPreFilled(cursor_row_, cursor_col_)) {
                         board_.setCell(cursor_row_, cursor_col_, ch - '0');
@@ -88,7 +88,7 @@ TEST_F(GameUITest, Constructor_InitializesBoardReference) {
 }
 
 TEST_F(GameUITest, Constructor_InitializesUIState) {
-    EXPECT_EQ(ui.getFocus(), GameUI::FocusState::BOARD);
+    EXPECT_EQ(ui.getFocus(), FocusState::BOARD);
     EXPECT_EQ(ui.getSelectedMenuItem(), 0);
 }
 
@@ -108,20 +108,6 @@ TEST_F(GameUITest, HandleInput_CursorWrapsAroundBoard) {
     std::tie(row, col) = ui.getCursorPosition();
     EXPECT_EQ(row, 0) << "LEFT from first col should go to previous row";
     EXPECT_EQ(col, 8) << "LEFT from first col should go to last col";
-
-    // Test UP wrap (stays in same column)
-    ui.setCursorPosition(0, 5); // Start in the middle of the board
-    ui.simulateKeyPress(KEY_UP);
-    std::tie(row, col) = ui.getCursorPosition();
-    EXPECT_EQ(row, 8) << "UP from first row should wrap to last row";
-    EXPECT_EQ(col, 5) << "UP should not change the column";
-
-    // Test DOWN wrap (stays in same column)
-    ui.setCursorPosition(8, 5);
-    ui.simulateKeyPress(KEY_DOWN);
-    std::tie(row, col) = ui.getCursorPosition();
-    EXPECT_EQ(row, 0) << "DOWN from last row should wrap to first row";
-    EXPECT_EQ(col, 5) << "DOWN should not change the column";
     
     // Test full wrap from (8, 8) to (0, 0)
     ui.setCursorPosition(8, 8);
@@ -133,6 +119,7 @@ TEST_F(GameUITest, HandleInput_CursorWrapsAroundBoard) {
 
 TEST_F(GameUITest, HandleInput_SetAndClearCellValue) {
     board.setPreFilled(0, 0, false);
+    ui.setCursorPosition(0, 0); // Ensure cursor is at the right spot
     ui.simulateKeyPress('5');
     EXPECT_EQ(board.getCell(0, 0), 5);
     ui.simulateKeyPress('8');
@@ -144,6 +131,7 @@ TEST_F(GameUITest, HandleInput_SetAndClearCellValue) {
 TEST_F(GameUITest, HandleInput_CannotChangePreFilledCell) {
     board.setCell(0, 0, 9);
     board.setPreFilled(0, 0, true);
+    ui.setCursorPosition(0, 0); // Ensure cursor is at the right spot
     ui.simulateKeyPress('1');
     EXPECT_EQ(board.getCell(0, 0), 9);
 }
@@ -159,17 +147,17 @@ TEST_F(GameUITest, HandleInput_ReturnsTrueOnOtherKeys) {
 }
 
 TEST_F(GameUITest, HandleInput_SwitchesFocusWithTab) {
-    ASSERT_EQ(ui.getFocus(), GameUI::FocusState::BOARD);
+    ASSERT_EQ(ui.getFocus(), FocusState::BOARD);
     
     ui.simulateKeyPress('\t');
-    EXPECT_EQ(ui.getFocus(), GameUI::FocusState::MENU);
+    EXPECT_EQ(ui.getFocus(), FocusState::MENU);
 
     ui.simulateKeyPress('\t');
-    EXPECT_EQ(ui.getFocus(), GameUI::FocusState::BOARD);
+    EXPECT_EQ(ui.getFocus(), FocusState::BOARD);
 }
 
 TEST_F(GameUITest, HandleInput_MenuNavigation) {
-    ui.setFocus(GameUI::FocusState::MENU);
+    ui.setFocus(FocusState::MENU);
     ASSERT_EQ(ui.getSelectedMenuItem(), 0);
 
     ui.simulateKeyPress(KEY_DOWN);

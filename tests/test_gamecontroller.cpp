@@ -1,77 +1,215 @@
 #include <gtest/gtest.h>
+#include <ncurses.h>
 #include "GameController.hpp"
 #include "SudokuBoard.hpp"
+#include "IGameUI.hpp"
+#include <memory>
+#include <vector>
 
-// We make the test fixture a friend of the GameController to access its private members
+// This is our mock UI class for testing the GameController logic.
+class MockGameUI : public IGameUI {
+public:
+    // --- Mock Controls ---
+    void setNextKey(int key) {
+        key_to_return_ = key;
+    }
+
+    // --- Mock State Variables (for assertions) ---
+    std::string last_displayed_message;
+    int flash_screen_call_count = 0;
+    std::vector<std::pair<int, int>> last_set_errors;
+
+private:
+    FocusState focus_ = FocusState::BOARD;
+    std::pair<int, int> cursor_pos_ = {0, 0};
+    int selected_menu_item_ = 0;
+    int key_to_return_ = 0;
+    const std::vector<std::string> menu_items_ = {"Submit", "Undo", "Hint", "New Game", "Quit"};
+
+public:
+    // --- IGameUI Interface Implementation ---
+    void displayBoard() const noexcept override {}
+
+    int getPressedKey() const noexcept override {
+        return key_to_return_;
+    }
+
+    void displayMessage(const std::string& message) const noexcept override {
+        const_cast<MockGameUI*>(this)->last_displayed_message = message;
+    }
+
+    void flashScreen() const noexcept override {
+        const_cast<MockGameUI*>(this)->flash_screen_call_count++;
+    }
+
+    void setFocus(FocusState new_focus) noexcept override {
+        focus_ = new_focus;
+    }
+
+    void setCursorPosition(int row, int col) noexcept override {
+        cursor_pos_ = {row, col};
+    }
+
+    void setSelectedMenuItem(int item) noexcept override {
+        selected_menu_item_ = item;
+    }
+
+    void setErrors(const std::vector<std::pair<int, int>>& errors) noexcept override {
+        last_set_errors = errors;
+    }
+
+    std::pair<int, int> getCursorPosition() const noexcept override {
+        return cursor_pos_;
+    }
+
+    FocusState getFocus() const noexcept override {
+        return focus_;
+    }
+
+    const std::vector<std::string>& getMenuItems() const noexcept override {
+        return menu_items_;
+    }
+
+    int getSelectedMenuItem() const noexcept override {
+        return selected_menu_item_;
+    }
+};
+
+// New test fixture for GameController
 class GameControllerTest : public ::testing::Test {
 protected:
-    friend class GameController;
-    GameController controller;
+    SudokuBoard board;
+    MockGameUI* mock_ui_ptr; // Raw pointer for setting up and inspecting the mock
+    std::unique_ptr<GameController> controller;
+
+    // This function runs before each test
+    void SetUp() override {
+        auto owned_ui = std::make_unique<MockGameUI>();
+        mock_ui_ptr = owned_ui.get(); // Get the raw pointer before moving ownership
+        controller = std::make_unique<GameController>(board, std::move(owned_ui));
+    }
+
+    // Helper to simulate a sequence of inputs to the controller
+    void simulateKeyPresses(const std::vector<int>& keys) {
+        for (int key : keys) {
+            mock_ui_ptr->setNextKey(key);
+            controller->processInput(mock_ui_ptr->getPressedKey());
+        }
+    }
 };
 
 TEST_F(GameControllerTest, SubmitIncompleteBoard) {
-    ASSERT_FALSE(controller.board_.isFull());
+    // Arrange: Board is empty by default
     
-    controller.ui_.setFocus(GameUI::FocusState::MENU);
-    controller.ui_.setSelectedMenuItem(0); // 0 is "Submit"
-    controller.processInput('\n');
+    // Act: Simulate tabbing to menu and pressing enter on "Submit"
+    simulateKeyPresses({'\t', '\n'});
 
-    EXPECT_TRUE(controller.isRunning());
-    // Verify that the correct message was passed to the UI
-    EXPECT_EQ(controller.ui_.getLastMessage(), "Board is not full yet!");
+    // Assert
+    EXPECT_EQ(mock_ui_ptr->last_displayed_message, "Board is not full yet!");
+    EXPECT_TRUE(controller->isRunning());
 }
 
 TEST_F(GameControllerTest, SubmitIncorrectBoard) {
-    // Fill the board, but make it incorrect
+    // Arrange: Fill the board with an invalid solution
     for (int i = 0; i < 9; ++i) {
         for (int j = 0; j < 9; ++j) {
-            controller.board_.setCell(i, j, 1); // Fill every cell with '1'
+            board.setCell(i, j, 1);
         }
     }
-    ASSERT_TRUE(controller.board_.isFull());
-    ASSERT_FALSE(controller.board_.isValid());
 
-    // Simulate selecting "Submit" and pressing Enter
-    controller.ui_.setFocus(GameUI::FocusState::MENU);
-    controller.ui_.setSelectedMenuItem(0);
-    controller.processInput('\n');
+    // Act: Simulate submitting
+    simulateKeyPresses({'\t', '\n'});
 
-    // The game should still be running
-    EXPECT_TRUE(controller.isRunning());
+    // Assert
+    EXPECT_EQ(mock_ui_ptr->last_displayed_message, "Your mistakes are highlighted in red!");
+    EXPECT_FALSE(mock_ui_ptr->last_set_errors.empty()); // Check that errors were actually set
+    EXPECT_TRUE(controller->isRunning());
 }
 
 TEST_F(GameControllerTest, SubmitCorrectBoard) {
-    // Generate a full, solved board
+    // Arrange: Fill the board with a valid, complete solution
     std::random_device rd;
     std::mt19937 g(rd());
-    controller.board_.solveBoard(g);
-    ASSERT_TRUE(controller.board_.isFull());
-    ASSERT_TRUE(controller.board_.isValid());
+    board.solveBoard(g);
 
-    // Simulate selecting "Submit" and pressing Enter
-    controller.ui_.setFocus(GameUI::FocusState::MENU);
-    controller.ui_.setSelectedMenuItem(0);
-    controller.processInput('\n');
+    // Act: Simulate submitting
+    simulateKeyPresses({'\t', '\n'});
 
-    // The game should stop running
-    EXPECT_FALSE(controller.isRunning());
+    // Assert
+    EXPECT_EQ(mock_ui_ptr->last_displayed_message, "Congratulations! You solved it!");
+    EXPECT_FALSE(controller->isRunning());
 }
 
-TEST_F(GameControllerTest, UndoAction) {
-    // Make a move on the board
-    controller.board_.setCell(0, 0, 5);
-    ASSERT_EQ(controller.board_.getCell(0, 0), 5);
+TEST_F(GameControllerTest, UndoAction_Success) {
+    // Arrange: Make a move on the board
+    simulateKeyPresses({'5'});
+    ASSERT_EQ(board.getCell(0, 0), 5);
 
-    // Simulate selecting "Undo" and pressing Enter
-    controller.ui_.setFocus(GameUI::FocusState::MENU);
-    controller.ui_.setSelectedMenuItem(1); // 1 is "Undo"
-    controller.processInput('\n');
+    // Act: Navigate to "Undo" and select it
+    simulateKeyPresses({'\t', KEY_DOWN, '\n'});
 
-    // The cell should be reverted to its original state (0)
-    EXPECT_EQ(controller.board_.getCell(0, 0), 0);
-    EXPECT_TRUE(controller.isRunning());
+    // Assert
+    EXPECT_EQ(board.getCell(0, 0), 0);
+    EXPECT_EQ(mock_ui_ptr->last_displayed_message, "Last move undone!");
+}
 
-    // Try to undo again when there are no moves left
-    // The board's undo() method should return false
-    EXPECT_FALSE(controller.board_.undo());
+TEST_F(GameControllerTest, UndoAction_NothingToUndo) {
+    // Arrange: Board is in its initial state
+
+    // Act: Navigate to "Undo" and select it
+    simulateKeyPresses({'\t', KEY_DOWN, '\n'});
+
+    // Assert
+    EXPECT_EQ(mock_ui_ptr->last_displayed_message, "Nothing to undo!");
+}
+
+TEST_F(GameControllerTest, HintAction_Success) {
+    // Arrange: Board is empty, cursor is at (0, 0)
+    ASSERT_EQ(board.getCell(0, 0), 0);
+
+    // Act: Navigate to "Hint" and select it
+    simulateKeyPresses({'\t', KEY_DOWN, KEY_DOWN, '\n'});
+
+    // Assert
+    EXPECT_NE(board.getCell(0, 0), 0); // Cell should now have a hint
+    EXPECT_EQ(mock_ui_ptr->last_displayed_message, "Hint provided!");
+}
+
+TEST_F(GameControllerTest, HintAction_OnPreFilledCellFails) {
+    // Arrange: Cell (0,0) is pre-filled
+    board.setCell(0, 0, 5);
+    board.setPreFilled(0, 0, true);
+    ASSERT_EQ(mock_ui_ptr->flash_screen_call_count, 0);
+
+    // Act: Navigate to "Hint" and select it
+    simulateKeyPresses({'\t', KEY_DOWN, KEY_DOWN, '\n'});
+
+    // Assert
+    EXPECT_EQ(board.getCell(0, 0), 5); // Value should not have changed
+    EXPECT_EQ(mock_ui_ptr->flash_screen_call_count, 1);
+}
+
+TEST_F(GameControllerTest, QuitActionFromMenu) {
+    // Arrange: Game is running
+    ASSERT_TRUE(controller->isRunning());
+
+    // Act: Navigate to "Quit" and select it
+    simulateKeyPresses({'\t', KEY_UP, '\n'}); // KEY_UP wraps around to Quit
+
+    // Assert
+    EXPECT_FALSE(controller->isRunning());
+}
+
+TEST_F(GameControllerTest, InputOnBoard_CannotChangePreFilledCell) {
+    // Arrange: Cell (0,0) is pre-filled
+    board.setCell(0, 0, 5);
+    board.setPreFilled(0, 0, true);
+    ASSERT_EQ(mock_ui_ptr->flash_screen_call_count, 0);
+
+    // Act: Try to type '7' into the cell
+    simulateKeyPresses({'7'});
+
+    // Assert
+    EXPECT_EQ(board.getCell(0, 0), 5); // Value should not change
+    EXPECT_EQ(mock_ui_ptr->flash_screen_call_count, 1);
 }
