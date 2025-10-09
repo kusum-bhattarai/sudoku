@@ -29,6 +29,32 @@ void GameController::handleSubmit() noexcept {
     }
 }
 
+void GameController::handleUndo() noexcept {
+    if (board_.undo()) {
+        ui_.displayMessage("Last move undone!");
+    } else {
+        ui_.displayMessage("Nothing to undo!");
+    }
+}
+
+void GameController::handleHint() noexcept {
+    auto [row, col] = ui_.getCursorPosition();
+    
+    // random number generator
+    std::random_device rd;
+    std::mt19937 g(rd());
+
+    auto hint = board_.getHint(row, col, g);
+
+    if (hint.has_value()) {
+        board_.setCell(row, col, hint.value());
+        ui_.displayMessage("Hint provided!");
+    } else {
+        ui_.flashScreen(); // Hint failed (max used, cell is pre-filled, etc.)
+    }
+}
+
+
 void GameController::processInput(int ch) noexcept {        
     if (ui_.getFocus() == GameUI::FocusState::BOARD) {
         ui_.setErrors({});
@@ -100,11 +126,11 @@ void GameController::processInput(int ch) noexcept {
                     is_running_ = false;
                 } else if (selected_item == "Submit") {
                     handleSubmit(); 
-                } else if (selected_item == "Undo") { 
-                    if (!board_.undo()) {            
-                        // If undo() returns false, flash the screen.
-                        ui_.flashScreen();
-                    }
+                } else if (selected_item == "Undo") {
+                    handleUndo();
+                }
+                else if (selected_item == "Hint") {
+                    handleHint();
                 }
                 // More actions will go here
                 break;
