@@ -100,6 +100,11 @@ void GameController::processInput(int ch) noexcept {
                     is_running_ = false;
                 } else if (selected_item == "Submit") {
                     handleSubmit(); 
+                } else if (selected_item == "Undo") { 
+                    if (!board_.undo()) {            
+                        // If undo() returns false, flash the screen.
+                        ui_.flashScreen();
+                    }
                 }
                 // More actions will go here
                 break;

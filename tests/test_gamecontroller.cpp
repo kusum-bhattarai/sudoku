@@ -56,3 +56,22 @@ TEST_F(GameControllerTest, SubmitCorrectBoard) {
     // The game should stop running
     EXPECT_FALSE(controller.isRunning());
 }
+
+TEST_F(GameControllerTest, UndoAction) {
+    // Make a move on the board
+    controller.board_.setCell(0, 0, 5);
+    ASSERT_EQ(controller.board_.getCell(0, 0), 5);
+
+    // Simulate selecting "Undo" and pressing Enter
+    controller.ui_.setFocus(GameUI::FocusState::MENU);
+    controller.ui_.setSelectedMenuItem(1); // 1 is "Undo"
+    controller.processInput('\n');
+
+    // The cell should be reverted to its original state (0)
+    EXPECT_EQ(controller.board_.getCell(0, 0), 0);
+    EXPECT_TRUE(controller.isRunning());
+
+    // Try to undo again when there are no moves left
+    // The board's undo() method should return false
+    EXPECT_FALSE(controller.board_.undo());
+}

@@ -7,10 +7,12 @@
 class GameControllerTest_SubmitIncompleteBoard_Test;
 class GameControllerTest_SubmitIncorrectBoard_Test;
 class GameControllerTest_SubmitCorrectBoard_Test;
+class GameControllerTest_UndoAction_Test;
 class GameController {
     friend class GameControllerTest_SubmitIncompleteBoard_Test;
     friend class GameControllerTest_SubmitIncorrectBoard_Test;
     friend class GameControllerTest_SubmitCorrectBoard_Test;
+    friend class GameControllerTest_UndoAction_Test;
 public:
     GameController() noexcept;
     void run() noexcept;
