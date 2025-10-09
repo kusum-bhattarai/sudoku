@@ -151,12 +151,12 @@ void GameUI::drawMenuWindow() const noexcept {
     mvwprintw(menu_win_, 6, 3, "Enter : Select Action");
 
     mvwprintw(menu_win_, 9, 2, "[ ACTIONS ]");
-    for (int i = 0; i < menu_items_.size(); ++i) {
-        if (focus_ == FocusState::MENU && i == selected_menu_item_) {
+    for (size_t i = 0; i < menu_items_.size(); ++i) {
+        if (focus_ == FocusState::MENU && i == static_cast<size_t>(selected_menu_item_)) {
             wattron(menu_win_, COLOR_PAIR(5)); // Highlight selected item
         }
         mvwprintw(menu_win_, 10 + i, 3, menu_items_[i].c_str());
-        if (focus_ == FocusState::MENU && i == selected_menu_item_) {
+        if (focus_ == FocusState::MENU && i == static_cast<size_t>(selected_menu_item_)) {
             wattroff(menu_win_, COLOR_PAIR(5));
         }
     }
@@ -195,13 +195,32 @@ int GameUI::getPressedKey() const noexcept {
 void GameUI::setFocus(FocusState new_focus) noexcept {
     focus_ = new_focus;
 }
+
 void GameUI::setCursorPosition(int row, int col) noexcept {
     cursor_row_ = row;
     cursor_col_ = col;
 }
+
 void GameUI::setSelectedMenuItem(int item) noexcept {
     selected_menu_item_ = item;
 }
+
 void GameUI::flashScreen() const noexcept {
     flash();
+}
+
+FocusState GameUI::getFocus() const noexcept {
+    return focus_;
+}
+
+std::pair<int, int> GameUI::getCursorPosition() const noexcept {
+    return {cursor_row_, cursor_col_};
+}
+
+const std::vector<std::string>& GameUI::getMenuItems() const noexcept {
+    return menu_items_;
+}
+
+int GameUI::getSelectedMenuItem() const noexcept {
+    return selected_menu_item_;
 }
