@@ -1,16 +1,16 @@
-#include "GameUI.hpp"
+#include "GameController.hpp"
 #include "SudokuBoard.hpp"
+#include "GameUI.hpp"
+#include <memory>
 
 int main() {
     SudokuBoard board;
-    board.generatePuzzle(SudokuBoard::Difficulty::Easy);
-    GameUI ui(board);
-    ui.displayWelcomeScreen();
-    ui.displayBoard(); 
 
-    while (ui.handleInput()) {
-        // Loop body can be empty as all handling is done in handleInput
-    }
+    auto ui = std::make_unique<GameUI>(board);
+
+    GameController game(board, std::move(ui));
+
+    game.run();
     
     return 0;
 }

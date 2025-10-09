@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "SudokuBoard.hpp"
+#include <algorithm>
 
 // Test fixture for SudokuBoard
 class SudokuBoardTest : public ::testing::Test {
@@ -435,4 +436,42 @@ TEST_F(SudokuBoardTest, Undo_AdditionalCases) {
     EXPECT_TRUE(board.undo()) << "Undo cell 1 to 0";
     EXPECT_EQ(board.getCell(empty_cells[1].first, empty_cells[1].second), 0) << "Cell 1 should be 0";
     EXPECT_FALSE(board.canUndo()) << "No more moves to undo";
+}
+
+TEST_F(SudokuBoardTest, FindErrors_IdentifiesAllDuplicates) {
+    // Row duplicate
+    board.setCell(0, 1, 5);
+    board.setCell(0, 8, 5);
+
+    // Column duplicate
+    board.setCell(1, 2, 3);
+    board.setCell(7, 2, 3);
+
+    // Box duplicate
+    board.setCell(4, 4, 8);
+    board.setCell(5, 5, 8);
+    
+    // A cell that is part of multiple errors (row and box)
+    board.setCell(2, 0, 9); // This cell is part of two conflicts
+    board.setCell(2, 5, 9); // Row conflict
+    board.setCell(1, 1, 9); // Box conflict
+
+    auto errors = board.findErrors();
+    
+    // Use a set for easy lookup, as order doesn't matter
+    std::set<std::pair<int, int>> error_set(errors.begin(), errors.end());
+
+    // Check that all expected error cells are present
+    EXPECT_TRUE(error_set.count({0, 1}));
+    EXPECT_TRUE(error_set.count({0, 8}));
+    EXPECT_TRUE(error_set.count({1, 2}));
+    EXPECT_TRUE(error_set.count({7, 2}));
+    EXPECT_TRUE(error_set.count({4, 4}));
+    EXPECT_TRUE(error_set.count({5, 5}));
+    EXPECT_TRUE(error_set.count({2, 0}));
+    EXPECT_TRUE(error_set.count({2, 5}));
+    EXPECT_TRUE(error_set.count({1, 1}));
+
+    // Check total number of unique error cells
+    EXPECT_EQ(error_set.size(), 9);
 }

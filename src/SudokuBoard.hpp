@@ -6,6 +6,7 @@
 #include <optional>
 #include <random>
 #include <deque>
+#include <utility> // for std::pair
 
 class SudokuBoard {
 public:
@@ -33,6 +34,7 @@ public:
     bool solveBoard(std::mt19937& rng) noexcept;
     std::optional<int> getHint(int row, int col, std::mt19937& rng) noexcept;      // get a hint for cell (row, col)
     int getHintsUsed() const noexcept;                          // number of hints used  
+    std::vector<std::pair<int, int>> findErrors() const noexcept;   // find all cells that violate Sudoku rules
 
     // helper to check if a value is valid
     bool isValidValue(int value) const noexcept;

@@ -1,4 +1,5 @@
 #include "SudokuBoard.hpp"
+#include <set>
 
 SudokuBoard::SudokuBoard() noexcept {
     // initialize 9x9 board with zeros
@@ -240,6 +241,70 @@ bool SudokuBoard::undo() noexcept {
         return true;
     }
     return false;
+}
+
+std::vector<std::pair<int, int>> SudokuBoard::findErrors() const noexcept {
+    std::set<std::pair<int, int>> error_cells;
+
+    // Check rows for duplicates
+    for (int r = 0; r < SIZE; ++r) {
+        std::array<std::vector<int>, SIZE + 1> seen_cols;
+        for (int c = 0; c < SIZE; ++c) {
+            int val = board_[r][c];
+            if (val != 0) {
+                seen_cols[val].push_back(c);
+            }
+        }
+        for (const auto& cols : seen_cols) {
+            if (cols.size() > 1) {
+                for (int c : cols) {
+                    error_cells.insert({r, c});
+                }
+            }
+        }
+    }
+
+    // Check columns for duplicates
+    for (int c = 0; c < SIZE; ++c) {
+        std::array<std::vector<int>, SIZE + 1> seen_rows;
+        for (int r = 0; r < SIZE; ++r) {
+            int val = board_[r][c];
+            if (val != 0) {
+                seen_rows[val].push_back(r);
+            }
+        }
+        for (const auto& rows : seen_rows) {
+            if (rows.size() > 1) {
+                for (int r : rows) {
+                    error_cells.insert({r, c});
+                }
+            }
+        }
+    }
+
+    // Check 3x3 boxes for duplicates
+    for (int box_start_row = 0; box_start_row < SIZE; box_start_row += 3) {
+        for (int box_start_col = 0; box_start_col < SIZE; box_start_col += 3) {
+            std::array<std::vector<std::pair<int, int>>, SIZE + 1> seen_coords;
+            for (int r = box_start_row; r < box_start_row + 3; ++r) {
+                for (int c = box_start_col; c < box_start_col + 3; ++c) {
+                    int val = board_[r][c];
+                    if (val != 0) {
+                        seen_coords[val].push_back({r, c});
+                    }
+                }
+            }
+            for (const auto& coords : seen_coords) {
+                if (coords.size() > 1) {
+                    for (const auto& p : coords) {
+                        error_cells.insert(p);
+                    }
+                }
+            }
+        }
+    }
+
+    return {error_cells.begin(), error_cells.end()};
 }
 
 bool SudokuBoard::canUndo() const noexcept {

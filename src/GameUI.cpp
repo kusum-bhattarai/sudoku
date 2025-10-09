@@ -1,5 +1,8 @@
 #include "GameUI.hpp"
 #include <string>
+#include <unistd.h> // for isatty
+#include <stdio.h>  // for fileno
+#include <set>
 
 GameUI::GameUI(SudokuBoard& board) noexcept : board_(board), window_(nullptr) {
     window_ = initscr();
@@ -85,8 +88,14 @@ void GameUI::displayWelcomeScreen() const noexcept {
     wgetch(window_); 
 }
 
+void GameUI::setErrors(const std::vector<std::pair<int, int>>& errors) noexcept {
+    error_cells_ = errors;
+}
+
 void GameUI::drawBoardWindow() const noexcept {
     werase(board_win_);
+
+    std::set<std::pair<int, int>> error_set(error_cells_.begin(), error_cells_.end());
 
     // Draw grid lines
     for (int i = 0; i <= 9; ++i) {
@@ -103,11 +112,15 @@ void GameUI::drawBoardWindow() const noexcept {
             char ch = (value == 0) ? '.' : ('0' + value);
 
             int attribute = A_NORMAL;
-            if (board_.isPreFilled(row, col)) {
-                attribute = COLOR_PAIR(1);
+            // Check for error first, as it has the highest priority
+            if (error_set.count({row, col})) {
+                attribute = COLOR_PAIR(3); // Red for error
+            } else if (board_.isPreFilled(row, col)) {
+                attribute = COLOR_PAIR(1); // Blue for pre-filled
             } else if (value != 0) {
-                attribute = COLOR_PAIR(2);
+                attribute = COLOR_PAIR(2); // Yellow for user-entered
             }
+
             if (focus_ == FocusState::BOARD && row == cursor_row_ && col == cursor_col_) {
                 attribute |= A_REVERSE;
             }
@@ -117,6 +130,7 @@ void GameUI::drawBoardWindow() const noexcept {
             wattroff(board_win_, attribute);
         }
     }
+    
     box(board_win_, 0, 0);
     wrefresh(board_win_);
 }
@@ -137,12 +151,12 @@ void GameUI::drawMenuWindow() const noexcept {
     mvwprintw(menu_win_, 6, 3, "Enter : Select Action");
 
     mvwprintw(menu_win_, 9, 2, "[ ACTIONS ]");
-    for (int i = 0; i < menu_items_.size(); ++i) {
-        if (focus_ == FocusState::MENU && i == selected_menu_item_) {
+    for (size_t i = 0; i < menu_items_.size(); ++i) {
+        if (focus_ == FocusState::MENU && i == static_cast<size_t>(selected_menu_item_)) {
             wattron(menu_win_, COLOR_PAIR(5)); // Highlight selected item
         }
         mvwprintw(menu_win_, 10 + i, 3, menu_items_[i].c_str());
-        if (focus_ == FocusState::MENU && i == selected_menu_item_) {
+        if (focus_ == FocusState::MENU && i == static_cast<size_t>(selected_menu_item_)) {
             wattroff(menu_win_, COLOR_PAIR(5));
         }
     }
@@ -150,91 +164,63 @@ void GameUI::drawMenuWindow() const noexcept {
     wrefresh(menu_win_);
 }
 
-bool GameUI::handleInput() noexcept {
-    if (!window_) return false;
-    displayBoard();
-    int ch = wgetch(window_);
+void GameUI::displayMessage(const std::string& message) const noexcept {
+    last_message_ = message; // Store the message for testing
 
-    if (focus_ == FocusState::BOARD) {
-        switch (ch) {
-            case '\t': // Tab key
-                focus_ = FocusState::MENU;
-                break;
-            case 'q':
-            case 'Q':
-                return false; // Signal to quit
+    // Only interact with ncurses if we are in a real terminal
+    if (isatty(fileno(stdout))) {
+        int yMax, xMax;
+        getmaxyx(window_, yMax, xMax);
 
-            case KEY_RIGHT: {
-                int index = cursor_row_ * SudokuBoard::SIZE + cursor_col_;
-                index = (index + 1) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
-                cursor_row_ = index / SudokuBoard::SIZE;
-                cursor_col_ = index % SudokuBoard::SIZE;
-                break;
-            }
-            case KEY_LEFT: {
-                int index = cursor_row_ * SudokuBoard::SIZE + cursor_col_;
-                index = (index - 1 + (SudokuBoard::SIZE * SudokuBoard::SIZE)) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
-                cursor_row_ = index / SudokuBoard::SIZE;
-                cursor_col_ = index % SudokuBoard::SIZE;
-                break;
-            }
-            case KEY_DOWN: {
-                int index = cursor_col_ * SudokuBoard::SIZE + cursor_row_;
-                index = (index + 1) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
-                cursor_col_ = index / SudokuBoard::SIZE;
-                cursor_row_ = index % SudokuBoard::SIZE;
-                break;
-            }
-            case KEY_UP: {
-                int index = cursor_col_ * SudokuBoard::SIZE + cursor_row_;
-                index = (index - 1 + (SudokuBoard::SIZE * SudokuBoard::SIZE)) % (SudokuBoard::SIZE * SudokuBoard::SIZE);
-                cursor_col_ = index / SudokuBoard::SIZE;
-                cursor_row_ = index % SudokuBoard::SIZE;
-                break;
-            }
+        int msg_width = message.length() + 4;
+        int msg_height = 3;
+        int start_y = (yMax - msg_height) / 2;
+        int start_x = (xMax - msg_width) / 2;
 
-            case '1' ... '9':
-                if (!board_.isPreFilled(cursor_row_, cursor_col_)) {
-                    int value = ch - '0';
-                    board_.setCell(cursor_row_, cursor_col_, value);
-                } else {
-                    flash();
-                }
-                break;
+        WINDOW* msg_win = newwin(msg_height, msg_width, start_y, start_x);
+        box(msg_win, 0, 0);
+        mvwprintw(msg_win, 1, 2, message.c_str());
+        wrefresh(msg_win);
 
-            case KEY_BACKSPACE:
-            case 127: 
-            case '0':
-                if (!board_.isPreFilled(cursor_row_, cursor_col_)) {
-                    board_.setCell(cursor_row_, cursor_col_, 0);
-                }
-                break;
+        wgetch(window_); // This will now only be called during manual play
 
-            default:
-                break;
-        }
-    } else { 
-        switch (ch) {
-            case '\t': // Tab key
-                focus_ = FocusState::BOARD;
-                break;
-            case KEY_UP:
-                selected_menu_item_ = (selected_menu_item_ - 1 + menu_items_.size()) % menu_items_.size();
-                break;
-            case KEY_DOWN:
-                selected_menu_item_ = (selected_menu_item_ + 1) % menu_items_.size();
-                break;
-            case '\n': // Enter key
-            case KEY_ENTER:
-                if (menu_items_[selected_menu_item_] == "Quit") {
-                    return false; // Signal to quit
-                }
-                break;
-            default:
-                break;
-        }
+        delwin(msg_win);
     }
+}
 
-    displayBoard();
-    return true;
+int GameUI::getPressedKey() const noexcept {
+    return wgetch(window_);
+}
+
+void GameUI::setFocus(FocusState new_focus) noexcept {
+    focus_ = new_focus;
+}
+
+void GameUI::setCursorPosition(int row, int col) noexcept {
+    cursor_row_ = row;
+    cursor_col_ = col;
+}
+
+void GameUI::setSelectedMenuItem(int item) noexcept {
+    selected_menu_item_ = item;
+}
+
+void GameUI::flashScreen() const noexcept {
+    flash();
+}
+
+FocusState GameUI::getFocus() const noexcept {
+    return focus_;
+}
+
+std::pair<int, int> GameUI::getCursorPosition() const noexcept {
+    return {cursor_row_, cursor_col_};
+}
+
+const std::vector<std::string>& GameUI::getMenuItems() const noexcept {
+    return menu_items_;
+}
+
+int GameUI::getSelectedMenuItem() const noexcept {
+    return selected_menu_item_;
 }

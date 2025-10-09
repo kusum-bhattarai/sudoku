@@ -3,25 +3,36 @@
 
 #include <ncurses.h>
 #include "SudokuBoard.hpp"
+#include "IGameUI.hpp" 
 
-class GameUI {
+class GameUI : public IGameUI { // inheriting from IGameUI
 public:
-    enum class FocusState { BOARD, MENU };          // To track focus between board and menu windows
-    explicit GameUI(SudokuBoard& board) noexcept;   // Constructor takes board reference
-    ~GameUI() noexcept;                             // Cleanup ncurses
-    GameUI(const GameUI&) = delete;                 // No copy
+    explicit GameUI(SudokuBoard& board) noexcept;
+    ~GameUI() noexcept override;
+    GameUI(const GameUI&) = delete;
     GameUI& operator=(const GameUI&) = delete;
 
-    void displayWelcomeScreen() const noexcept;
-    void displayBoard() const noexcept;          
-    void showMenu() const noexcept;             
-    bool handleInput() noexcept;               
+    // --- IGameUI Interface Implementations ---
+    void displayBoard() const noexcept override;
+    int getPressedKey() const noexcept override;
+    void displayMessage(const std::string& message) const noexcept override;
+    void flashScreen() const noexcept override;
 
-    // Getter for testing
+    // --- State Setters (called by GameController) ---
+    void setFocus(FocusState new_focus) noexcept override;
+    void setCursorPosition(int row, int col) noexcept override;
+    void setSelectedMenuItem(int item) noexcept override;
+    void setErrors(const std::vector<std::pair<int, int>>& errors) noexcept override;
+
+    // --- State Getters (needed by GameController) ---
+    std::pair<int, int> getCursorPosition() const noexcept override;
+    FocusState getFocus() const noexcept override;
+    const std::vector<std::string>& getMenuItems() const noexcept override;
+    int getSelectedMenuItem() const noexcept override;
+    
+    void displayWelcomeScreen() const noexcept;
     const std::vector<std::vector<int>>& getBoard() const noexcept { return board_.getBoard(); }
-    std::pair<int, int> getCursorPosition() const noexcept { return {cursor_row_, cursor_col_}; }
-    FocusState getFocus() const noexcept { return focus_; } 
-    int getSelectedMenuItem() const noexcept { return selected_menu_item_; } 
+    std::string getLastMessage() const { return last_message_; }
 
 
 protected:
@@ -35,8 +46,9 @@ protected:
     FocusState focus_ = FocusState::BOARD;      // Start with focus on the board
     int selected_menu_item_ = 0;                // Selected menu item index
     const std::vector<std::string> menu_items_ = {"Submit", "Undo", "Hint", "New Game", "Quit"};
+    mutable std::string last_message_;         // Store last message for testing
+    std::vector<std::pair<int, int>> error_cells_;  // Cells that are in error state
 
-    // Separate sub-windows for board and menu
     WINDOW* board_win_ = nullptr; 
     WINDOW* menu_win_ = nullptr;
 };
