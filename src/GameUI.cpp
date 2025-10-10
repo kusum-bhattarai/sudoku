@@ -88,6 +88,37 @@ void GameUI::displayWelcomeScreen() const noexcept {
     wgetch(window_); 
 }
 
+void GameUI::displayDifficultyMenu(int selected_difficulty) const noexcept {
+    if (!window_) return;
+
+    werase(window_);
+    wattron(window_, COLOR_PAIR(4)); // Use the same green color (pair 4)
+
+    int yMax, xMax;
+    getmaxyx(window_, yMax, xMax);
+
+    // Menu options
+    const std::vector<std::string> difficulties = {"Easy (Default)", "Medium", "Hard"};
+    const char* title = "Select Difficulty";
+    
+    mvwprintw(window_, yMax / 2 - 4, (xMax - strlen(title)) / 2, "%s", title);
+
+    for (size_t i = 0; i < difficulties.size(); ++i) {
+        if (static_cast<int>(i) == selected_difficulty) {
+            wattron(window_, A_REVERSE); // Highlight the selected item
+        }
+
+        mvwprintw(window_, yMax / 2 - 1 + i, (xMax - difficulties[i].length()) / 2, "%s", difficulties[i].c_str());
+        
+        if (static_cast<int>(i) == selected_difficulty) {
+            wattroff(window_, A_REVERSE);
+        }
+    }
+    
+    wattroff(window_, COLOR_PAIR(4));
+    wrefresh(window_);
+}
+
 void GameUI::setErrors(const std::vector<std::pair<int, int>>& errors) noexcept {
     error_cells_ = errors;
 }
