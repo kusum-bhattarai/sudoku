@@ -17,6 +17,7 @@ public:
     int getPressedKey() const noexcept override;
     void displayMessage(const std::string& message) const noexcept override;
     void flashScreen() const noexcept override;
+    void displayDifficultyMenu(int selected_difficulty) const noexcept override;
 
     // --- State Setters (called by GameController) ---
     void setFocus(FocusState new_focus) noexcept override;

@@ -13,6 +13,7 @@ public:
     bool isRunning() const noexcept { return is_running_; }
 
     void processInput(int ch) noexcept;     // Process input based on current focus
+    SudokuBoard::Difficulty selectDifficulty() noexcept;        // method to select difficulty
 
 private:
     void handleSubmit() noexcept;           // Handle submit action

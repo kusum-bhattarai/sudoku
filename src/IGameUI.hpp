@@ -17,6 +17,7 @@ public:
     virtual int getPressedKey() const noexcept = 0;
     virtual void displayMessage(const std::string& message) const noexcept = 0;
     virtual void flashScreen() const noexcept = 0;
+    virtual void displayDifficultyMenu(int selected_difficulty) const noexcept = 0;
 
     // --- State Setters (called by GameController) ---
     virtual void setFocus(FocusState new_focus) noexcept = 0;
