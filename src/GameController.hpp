@@ -20,6 +20,8 @@ private:
     void handleUndo() noexcept;             // Handle undo action
     void handleNewGame() noexcept;          // Handle new game action
 
+    SudokuBoard::Difficulty selectDifficulty() noexcept;        // method to select difficulty
+
     SudokuBoard& board_;
     std::unique_ptr<IGameUI> ui_; // Owns a UI that implements the interface
     bool is_running_ = true;

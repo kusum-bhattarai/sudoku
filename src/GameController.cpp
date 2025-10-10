@@ -5,13 +5,44 @@
 GameController::GameController(SudokuBoard& board, std::unique_ptr<IGameUI> ui) noexcept
     : board_(board), ui_(std::move(ui)) {}
 
+SudokuBoard::Difficulty GameController::selectDifficulty() noexcept {
+    int selected_item = 0; // 0: Easy, 1: Medium, 2: Hard
+    const int num_items = 3;
+
+    while (true) {
+        ui_->displayDifficultyMenu(selected_item);
+        int ch = ui_->getPressedKey();
+
+        switch (ch) {
+            case KEY_UP:
+                selected_item = (selected_item - 1 + num_items) % num_items;
+                break;
+            case KEY_DOWN:
+                selected_item = (selected_item + 1) % num_items;
+                break;
+            case '\n':
+            case KEY_ENTER:
+                if (selected_item == 0) return SudokuBoard::Difficulty::Easy;
+                if (selected_item == 1) return SudokuBoard::Difficulty::Medium;
+                if (selected_item == 2) return SudokuBoard::Difficulty::Hard;
+                break;
+        }
+    }
+}
+
 void GameController::run() noexcept {
+    // Show the one-time welcome screen
     if (auto* concrete_ui = dynamic_cast<GameUI*>(ui_.get())) {
         concrete_ui->displayWelcomeScreen();
     }
     
-    board_.generatePuzzle(SudokuBoard::Difficulty::Easy);
+    // Run the new difficulty selection loop
+    SudokuBoard::Difficulty chosen_difficulty = selectDifficulty();
+    
+    // Generate a puzzle with the chosen difficulty
+    board_.generatePuzzle(chosen_difficulty);
 
+    // Start the main game loop
     while (is_running_) {
         ui_->displayBoard();
         int ch = ui_->getPressedKey();
