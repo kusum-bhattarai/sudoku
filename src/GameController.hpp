@@ -13,14 +13,13 @@ public:
     bool isRunning() const noexcept { return is_running_; }
 
     void processInput(int ch) noexcept;     // Process input based on current focus
+    SudokuBoard::Difficulty selectDifficulty() noexcept;        // method to select difficulty
 
 private:
     void handleSubmit() noexcept;           // Handle submit action
     void handleHint() noexcept;             // Handle hint action
     void handleUndo() noexcept;             // Handle undo action
     void handleNewGame() noexcept;          // Handle new game action
-
-    SudokuBoard::Difficulty selectDifficulty() noexcept;        // method to select difficulty
 
     SudokuBoard& board_;
     std::unique_ptr<IGameUI> ui_; // Owns a UI that implements the interface
